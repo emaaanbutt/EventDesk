@@ -25,5 +25,5 @@ class ReviewMention(Base):
         UniqueConstraint("review_id", "mentioned_user_id", name="uq_review_user"),
     )
 
-    mentioned_user: Mapped["User"] = relationship(back_populates="review_mentions")
-    review: Mapped["Review"] = relationship(back_populates="mentions")
+    mentioned_user: Mapped[User] = relationship(back_populates="review_mentions")
+    review: Mapped[Review] = relationship(back_populates="mentions")

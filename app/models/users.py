@@ -29,31 +29,31 @@ class User(Base, TimeStamp):
     role: Mapped[Role] = mapped_column(Enum(Role, name="role"), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    events: Mapped[list["Event"]] = relationship(
+    events: Mapped[list[Event]] = relationship(
         back_populates="organizer",
         cascade="all, delete-orphan",
     )
-    bookings: Mapped[list["Booking"]] = relationship(
+    bookings: Mapped[list[Booking]] = relationship(
         back_populates="attendee",
         cascade="all, delete-orphan",
     )
-    reviews: Mapped[list["Review"]] = relationship(
+    reviews: Mapped[list[Review]] = relationship(
         back_populates="author",
         cascade="all, delete-orphan",
     )
-    notifications: Mapped[list["Notification"]] = relationship(
+    notifications: Mapped[list[Notification]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+    refresh_tokens: Mapped[list[RefreshToken]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    audit_logs: Mapped[list["AuditLog"]] = relationship(
+    audit_logs: Mapped[list[AuditLog]] = relationship(
         back_populates="actor",
         cascade="all, delete-orphan",
     )
-    review_mentions: Mapped[list["ReviewMention"]] = relationship(
+    review_mentions: Mapped[list[ReviewMention]] = relationship(
         back_populates="mentioned_user",
         cascade="all, delete-orphan",
     )

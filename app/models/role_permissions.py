@@ -28,5 +28,5 @@ class RolePermission(Base):
         UniqueConstraint("role", "permission_id", "scope", name="uq_role_permission_scope"),
     )
 
-    permission: Mapped["Permission | None"] = relationship(back_populates="role_permissions")
+    permission: Mapped[Permission | None] = relationship(back_populates="role_permissions")
    

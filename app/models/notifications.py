@@ -30,7 +30,7 @@ class Notification(Base, TimeStamp):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     review_id: Mapped[int | None] = mapped_column(ForeignKey("reviews.id", ondelete="CASCADE"), nullable=True)
 
-    user: Mapped["User"] = relationship(back_populates="notifications")
-    event: Mapped["Event | None"] = relationship(back_populates="notifications")
-    booking: Mapped["Booking | None"] = relationship(back_populates="notifications")
-    review: Mapped["Review | None"] = relationship(back_populates="notifications")
+    user: Mapped[User] = relationship(back_populates="notifications")
+    event: Mapped[Event | None] = relationship(back_populates="notifications")
+    booking: Mapped[Booking | None] = relationship(back_populates="notifications")
+    review: Mapped[Review | None] = relationship(back_populates="notifications")

@@ -17,7 +17,7 @@ class Category(Base, TimeStamp):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
 
-    events: Mapped[list["Event"]] = relationship(
+    events: Mapped[list[Event]] = relationship(
         back_populates="category",
         cascade="all, delete-orphan",
     )

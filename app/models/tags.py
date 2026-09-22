@@ -18,12 +18,12 @@ class Tag(Base, TimeStamp):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
 
-    event_tags: Mapped[list["EventTag"]] = relationship(
+    event_tags: Mapped[list[EventTag]] = relationship(
         back_populates="tag",
         cascade="all, delete-orphan",
         overlaps="events",
     )
-    events: Mapped[list["Event"]] = relationship(
+    events: Mapped[list[Event]] = relationship(
         secondary="event_tags",
         back_populates="tags",
         overlaps="event_tags,event,tag",

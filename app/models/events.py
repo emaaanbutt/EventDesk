@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from app.models.notifications import Notification
     from app.models.tags import Tag
     from app.models.users import User
+    from app.models.reviews import Review
 
 
 class Event(Base, TimeStamp):
@@ -34,26 +35,26 @@ class Event(Base, TimeStamp):
     status: Mapped[EventStatus] = mapped_column(Enum(EventStatus, name="status"), nullable=False)
     organizer_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
-    category: Mapped["Category"] = relationship(back_populates="events")
-    organizer: Mapped["User"] = relationship(back_populates="events")
-    bookings: Mapped[list["Booking"]] = relationship(
+    category: Mapped[Category] = relationship(back_populates="events")
+    organizer: Mapped[User] = relationship(back_populates="events")
+    bookings: Mapped[list[Booking]] = relationship(
         back_populates="event",
         cascade="all, delete-orphan",
     )
-    reviews: Mapped[list["Review"]] = relationship(
+    reviews: Mapped[list[Review]] = relationship(
         back_populates="event",
         cascade="all, delete-orphan",
     )
-    notifications: Mapped[list["Notification"]] = relationship(
+    notifications: Mapped[list[Notification]] = relationship(
         back_populates="event",
         cascade="all, delete-orphan",
     )
-    event_tags: Mapped[list["EventTag"]] = relationship(
+    event_tags: Mapped[list[EventTag]] = relationship(
         back_populates="event",
         cascade="all, delete-orphan",
         overlaps="tags",
     )
-    tags: Mapped[list["Tag"]] = relationship(
+    tags: Mapped[list[Tag]] = relationship(
         secondary="event_tags",
         back_populates="events",
         overlaps="event_tags,event,tag",

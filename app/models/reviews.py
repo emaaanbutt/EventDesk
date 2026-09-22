@@ -28,13 +28,13 @@ class Review(Base, TimeStamp):
         CheckConstraint("rating >= 1 AND rating <= 5", name="check_rating_range"),
     )
 
-    author: Mapped["User"] = relationship(back_populates="reviews")
-    event: Mapped["Event"] = relationship(back_populates="reviews")
-    mentions: Mapped[list["ReviewMention"]] = relationship(
+    author: Mapped[User] = relationship(back_populates="reviews")
+    event: Mapped[Event] = relationship(back_populates="reviews")
+    mentions: Mapped[list[ReviewMention]] = relationship(
         back_populates="review",
         cascade="all, delete-orphan",
     )
-    notifications: Mapped[list["Notification"]] = relationship(
+    notifications: Mapped[list[Notification]] = relationship(
         back_populates="review",
         cascade="all, delete-orphan",
     )

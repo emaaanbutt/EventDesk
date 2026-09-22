@@ -27,9 +27,9 @@ class Booking(Base, TimeStamp):
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), nullable=False)
     attendee_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
-    event: Mapped["Event"] = relationship(back_populates="bookings")
-    attendee: Mapped["User"] = relationship(back_populates="bookings")
-    notifications: Mapped[list["Notification"]] = relationship(
+    event: Mapped[Event] = relationship(back_populates="bookings")
+    attendee: Mapped[User] = relationship(back_populates="bookings")
+    notifications: Mapped[list[Notification]] = relationship(
         back_populates="booking",
         cascade="all, delete-orphan",
     )

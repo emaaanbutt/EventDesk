@@ -18,7 +18,7 @@ class Permission(Base, TimeStamp):
     code: Mapped[str] = mapped_column(VARCHAR(100), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
 
-    role_permissions: Mapped[list["RolePermission"]] = relationship(
+    role_permissions: Mapped[list[RolePermission]] = relationship(
         back_populates="permission",
         cascade="all, delete-orphan",
     )

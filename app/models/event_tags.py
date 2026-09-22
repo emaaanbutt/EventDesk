@@ -21,7 +21,7 @@ class EventTag(Base):
 
     __table_args__ = (UniqueConstraint("event_id", "tag_id", name="uq_event_tag"),)
 
-    event: Mapped["Event"] = relationship(back_populates="event_tags")
-    tag: Mapped["Tag"] = relationship(back_populates="event_tags")
+    event: Mapped[Event] = relationship(back_populates="event_tags")
+    tag: Mapped[Tag] = relationship(back_populates="event_tags")
 
    
