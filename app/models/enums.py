@@ -23,19 +23,14 @@ class BookingType(StrEnum):
     review_mention = "review_mention"
     event_reminder = "event_reminder"
 
+class PermissionScope(StrEnum):
+    global_ = "global"
+    self = "self"
+    own = "own"
+    own_event = "own_event"
+    any = any
 
-class WaitlistEntryStatus(StrEnum):
-     waiting = "waiting"
-     offered = "offered"
-     converted = "converted"
-     cancelled = "cancelled"
-     expired = "expired"
 
-
-class EventFrequency(StrEnum):
-    daily = "daily"
-    weekly = "weekly"
-    monthly = "monthly"
 
 
      
