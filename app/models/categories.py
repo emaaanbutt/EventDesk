@@ -1,18 +1,24 @@
-from sqlalchemy import  DateTime, func, VARCHAR
-from sqlalchemy.orm import Mapped, mapped_column, ForeignKey
-from app.db.base import Base
-from datetime import datetime
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy import VARCHAR
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.base import Base, TimeStamp
+
+if TYPE_CHECKING:
+    from app.models.events import Event
 
 
-class RecurrenceRule(Base):
-    __tablename__ = "recurrence_rules"
+class Category(Base, TimeStamp):
+    __tablename__ = "categories"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(VARCHAR, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
 
-    created_at: Mapped[datetime] = mapped_column(
-                DateTime(timezone=True), nullable=False, server_default=func.now()
-            )
-    
-
+    events: Mapped[list["Event"]] = relationship(
+        back_populates="category",
+        cascade="all, delete-orphan",
+    )
    

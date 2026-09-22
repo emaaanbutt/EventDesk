@@ -1,9 +1,11 @@
 from enum import StrEnum
 
+
 class Role(StrEnum):
     admin = "admin"
-    organizer = "orgnaizer"
+    organizer = "organizer"
     attendee = "attendee"
+
 
 class EventStatus(StrEnum):
     draft = "draft"
@@ -11,9 +13,11 @@ class EventStatus(StrEnum):
     cancelled = "cancelled"
     completed = "completed"
 
+
 class BookingStatus(StrEnum):
     cancelled = "cancelled"
     confirmed = "confirmed"
+
 
 class BookingType(StrEnum):
     booking_confirmed = "booking_confirmed"
@@ -23,14 +27,10 @@ class BookingType(StrEnum):
     review_mention = "review_mention"
     event_reminder = "event_reminder"
 
+
 class PermissionScope(StrEnum):
     global_ = "global"
     self = "self"
     own = "own"
     own_event = "own_event"
-    any = any
-
-
-
-
-     
+    any = "any"
