@@ -8,7 +8,7 @@ class Event(Base, TimeStamp):
     __tablename__ = "events"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    category_id: Mapped[int] = mapped_column(ForeignKey(), nullable=True)
+    category_id: Mapped[int] = mapped_column(ForeignKey(), nullable=False)
     title: Mapped[str] = mapped_column(VARCHAR(255))
     description: Mapped[str] = mapped_column(Text, unique=True)
     venue: Mapped[str] = mapped_column(VARCHAR, nullable=False)
