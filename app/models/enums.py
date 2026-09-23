@@ -24,7 +24,6 @@ class NotificationType(StrEnum):
     booking_cancelled = "booking_cancelled"
     new_review = "new_review"
     review_reply = "review_reply"
-    review_mention = "review_mention"
     event_reminder = "event_reminder"
 
 
