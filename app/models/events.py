@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, Text, VARCHAR
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, Text, UUID, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimeStamp
@@ -22,8 +23,8 @@ if TYPE_CHECKING:
 class Event(Base, TimeStamp):
     __tablename__ = "events"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    category_id: Mapped[int | None] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
     )
     title: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
@@ -33,7 +34,7 @@ class Event(Base, TimeStamp):
     ticket_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     total_tickets: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[EventStatus] = mapped_column(Enum(EventStatus, name="status"), nullable=False)
-    organizer_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    organizer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     category: Mapped[Category] = relationship(back_populates="events")
     organizer: Mapped[User] = relationship(back_populates="events")

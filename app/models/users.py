@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Enum, VARCHAR
+from sqlalchemy import Boolean, Enum, UUID, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimeStamp
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 class User(Base, TimeStamp):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
     email: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(VARCHAR, nullable=False)

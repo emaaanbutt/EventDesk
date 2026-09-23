@@ -86,6 +86,28 @@ model_config = ConfigDict(
             extra="forbid",
         )
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=100
+    )
+
+    email: Optional[EmailStr] = None
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str | None):
+        if value is not None:
+            return value.strip().lower()
+
+        return value
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+
+
 
 class UserLogin(BaseModel):
     email: EmailStr 
