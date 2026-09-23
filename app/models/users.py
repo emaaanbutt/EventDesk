@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.models.events import Event
     from app.models.notifications import Notification
     from app.models.refresh_tokens import RefreshToken
-    from app.models.review_mentions import ReviewReply
+    from app.models.review_replies import ReviewReply
     from app.models.reviews import Review
 
 

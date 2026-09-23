@@ -1,12 +1,10 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, Optional
 import re
 from enum import Enum
 from typing import Literal
 
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    ORGANIZER = "organizer"
-    ATTENDEE = "attendee"
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+from app.models.enums import Role
 
 class UserBase(BaseModel):
     name: str = Field(
@@ -31,6 +29,15 @@ class UserBase(BaseModel):
 
         return value
 
+    @field_validator("name")
+    def normalize_name(cls, value: str) -> str:
+        value = value.strip().lower()
+    
+        if not value:
+            raise ValueError("Name cannot be empty.")
+    
+        return value
+
     model_config = ConfigDict(
         from_attributes=True,
         populate_by_name=True,
@@ -42,10 +49,10 @@ class UserCreate(UserBase):
         ...,
         min_length=8,
         max_length=128,
-        description="Password for the user account."
+        description="Password for the user account.",
     )
 
-    role: Literal['organizer', 'attendee'] = Field(default='attendee')
+    role: Literal["organizer", "attendee"] = Field(default="attendee")
 
     @field_validator("password")
     def validate_password(cls, value:str) -> str:
@@ -71,29 +78,16 @@ class UserCreate(UserBase):
 
 
 class UserResponse(UserBase):
-    id:int
-    role:UserRole
-    is_active:bool
+    id: str
+    role: Role
+    is_active: bool
 
-    model_config = ConfigDict(
-                from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
-
-
-model_config = ConfigDict(
-            from_attributes=True,
-            populate_by_name=True,
-            extra="forbid",
-        )
 
 class UserUpdate(BaseModel):
-    name: Optional[str] = Field(
-        default=None,
-        min_length=1,
-        max_length=100
-    )
-
-    email: Optional[EmailStr] = None
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    email: EmailStr | None = None
 
     @field_validator("email")
     @classmethod
@@ -110,19 +104,15 @@ class UserUpdate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    email: EmailStr 
+    email: EmailStr
     password: str
+
     @field_validator("email")
+    @classmethod
     def normalize_email(cls, value: str) -> str:
         value = value.strip().lower()
-
         if not value:
             raise ValueError("Email cannot be empty.")
-
         return value
 
-    model_config = ConfigDict(
-            from_attributes=True,
-            populate_by_name=True,
-            extra="forbid",
-        )
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True, extra="forbid")

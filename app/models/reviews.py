@@ -10,7 +10,7 @@ from app.db.base import Base, TimeStamp
 
 if TYPE_CHECKING:
     from app.models.notifications import Notification
-    from app.models.review_mentions import ReviewReply
+    from app.models.review_replies import ReviewReply
     from app.models.users import User
     from app.models.events import Event
 

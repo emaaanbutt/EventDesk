@@ -33,11 +33,7 @@ class Event(Base, TimeStamp):
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     ticket_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     total_tickets: Mapped[int] = mapped_column(Integer, nullable=False)
-<<<<<<< HEAD
-    status: Mapped[EventStatus] = mapped_column(Enum(EventStatus, name="status"), nullable=False)
-=======
     status: Mapped[EventStatus] = mapped_column(Enum(EventStatus, name="event_status"), nullable=False)
->>>>>>> 2c7340c25a1fe87c4e3accab185997b8bdb3cd5e
     organizer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     category: Mapped[Category] = relationship(back_populates="events")
