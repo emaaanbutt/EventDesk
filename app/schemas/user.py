@@ -43,7 +43,7 @@ class UserBase(BaseModel):
 
     @field_validator("name")
     def normalize_name(cls, value: str) -> str:
-        value = value.strip().lower()
+        value = value.strip()
     
         if not value:
             raise ValueError("Name cannot be empty.")
@@ -88,6 +88,16 @@ class UserResponse(UserBase):
 class UserUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     email: EmailStr | None = None
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("Name cannot be empty")
+        return value
 
     @field_validator("email")
     @classmethod

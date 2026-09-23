@@ -59,8 +59,8 @@ class RefreshTokenRepository:
 
     @staticmethod
     async def revoke_all_for_user(user_id: uuid.UUID | str, db: AsyncSession) -> None:
-        result = await db.execute(select(RefreshToken).where(RefreshToken.user_id == user_id))
-        tokens = result.scalars().all()
-        for token in tokens:
-            token.revoked_at = datetime.now(timezone.utc)
-        await db.commit()
+        await db.execute(
+            update(RefreshToken)
+            .where(RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None))
+            .values(revoked_at=datetime.now(timezone.utc))
+        )
