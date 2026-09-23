@@ -9,8 +9,7 @@ from app.models.enums import PermissionScope
 from app.models.users import User
 
 
-async def authorize(actor: User, action: Action | str, owner_id: UUID | None = None) -> None:
-   
+def authorize(actor: User, action: Action | str, owner_id: UUID | None = None) -> None:
     try:
         selected_action = Action(action)
     except (ValueError, TypeError):

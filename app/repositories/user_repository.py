@@ -6,10 +6,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import hash_password
 from app.models.enums import Role
 from app.models.users import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserUpdate
 
 
 class UserRepository:
@@ -24,17 +23,18 @@ class UserRepository:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def create_user(payload: UserCreate, db: AsyncSession) -> User:
+    async def create_user(
+        name: str, email: str, password_hash: str, role: Role, db: AsyncSession
+    ) -> User:
         user = User(
-            name=payload.name,
-            email=payload.email,
-            password_hash=hash_password(payload.password),
-            role=Role(payload.role),
+            name=name,
+            email=email,
+            password_hash=password_hash,
+            role=role,
             is_active=True,
         )
         db.add(user)
-        await db.commit()
-        await db.refresh(user)
+        await db.flush()
         return user
 
     @staticmethod

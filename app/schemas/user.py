@@ -2,7 +2,7 @@ import re
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StrictBool, field_validator
 
 from app.models.enums import Role
 
@@ -126,3 +126,30 @@ class UserLogin(BaseModel):
         return value
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True, extra="forbid")
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(
+        min_length=8,
+        max_length=72,
+        description="Password for the user account.",
+    )
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        return validate_password_strength(value)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class RoleChange(BaseModel):
+    new_role: Role
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ActiveChange(BaseModel):
+    is_active: StrictBool
+
+    model_config = ConfigDict(extra="forbid")

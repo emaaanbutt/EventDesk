@@ -3,9 +3,11 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import create_access_token, create_refresh_token, decode_token, hash_token, verify_password
+from app.core.security import create_access_token, create_refresh_token, decode_token, hash_password, hash_token, verify_password
+from app.models.enums import Role
 from app.models.users import User
 from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.repositories.user_repository import UserRepository
@@ -20,8 +22,14 @@ class AuthService:
         if existing_user:
             raise HTTPException(status_code=409, detail="Email already exists")
 
-        user = await UserRepository.create_user(payload, db)
-        return await AuthService._issue_tokens(user, db)
+        try:
+            user = await UserRepository.create_user(
+                payload.name, payload.email, hash_password(payload.password), Role(payload.role), db
+            )
+            return await AuthService._issue_tokens(user, db)
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=409, detail="Email already exists") from None
 
     @staticmethod
     async def login_user(payload: UserLogin, db: AsyncSession) -> AuthTokenResponse:
@@ -70,6 +78,7 @@ class AuthService:
         token_hash = hash_token(refresh_token)
         if not await RefreshTokenRepository.consume(token_hash, user_id, db):
             raise HTTPException(status_code=401, detail="Refresh token is invalid or revoked")
+        await db.commit()
         return {"message": "Logged out successfully"}
 
     @staticmethod
@@ -78,6 +87,7 @@ class AuthService:
         refresh_token = create_refresh_token(str(user.id))
 
         await RefreshTokenRepository.create(user.id, refresh_token, db)
+        await db.commit()
 
         return AuthTokenResponse(
             access_token=access_token,

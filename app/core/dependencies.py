@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, AsyncIterator
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -15,12 +15,9 @@ from app.repositories.user_repository import UserRepository
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncIterator[AsyncSession]:
     async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+        yield session
 
 
 async def get_current_user(
@@ -43,15 +40,3 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account unavailable")
 
     return user
-
-
-def require_roles(*allowed_roles: str):
-    async def dependency(user: Annotated[User, Depends(get_current_user)]) -> User:
-        if user.role.value not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to perform this action",
-            )
-        return user
-
-    return dependency

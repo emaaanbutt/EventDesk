@@ -3,7 +3,6 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,22 +24,8 @@ class RefreshTokenRepository:
             revoked_at=None,
         )
         db.add(refresh_token)
-        await db.commit()
-        await db.refresh(refresh_token)
+        await db.flush()
         return refresh_token
-
-    @staticmethod
-    async def get_by_hash(token_hash: str, db: AsyncSession) -> RefreshToken | None:
-        result = await db.execute(select(RefreshToken).where(RefreshToken.token_hash == token_hash))
-        return result.scalar_one_or_none()
-
-    @staticmethod
-    async def revoke_by_hash(token_hash: str, db: AsyncSession) -> None:
-        refresh_token = await RefreshTokenRepository.get_by_hash(token_hash, db)
-        if refresh_token is None:
-            return
-        refresh_token.revoked_at = datetime.now(timezone.utc)
-        await db.commit()
 
     @staticmethod
     async def consume(token_hash: str, user_id: uuid.UUID, db: AsyncSession) -> bool:
@@ -54,7 +39,6 @@ class RefreshTokenRepository:
             )
             .values(revoked_at=datetime.now(timezone.utc))
         )
-        await db.commit()
         return result.rowcount == 1
 
     @staticmethod
