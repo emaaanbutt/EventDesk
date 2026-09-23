@@ -10,7 +10,7 @@ from app.db.base import Base, TimeStamp
 
 if TYPE_CHECKING:
     from app.models.notifications import Notification
-    from app.models.review_mentions import ReviewMention
+    from app.models.review_mentions import ReviewReply
     from app.models.users import User
     from app.models.events import Event
 
@@ -31,7 +31,7 @@ class Review(Base, TimeStamp):
 
     author: Mapped[User] = relationship(back_populates="reviews")
     event: Mapped[Event] = relationship(back_populates="reviews")
-    mentions: Mapped[list[ReviewMention]] = relationship(
+    replies: Mapped[list[ReviewReply]] = relationship(
         back_populates="review",
         cascade="all, delete-orphan",
     )

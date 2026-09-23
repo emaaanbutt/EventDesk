@@ -4,7 +4,8 @@ import uuid
 from datetime import datetime
 from typing import Any, TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, JSON, UUID, VARCHAR, func
+from sqlalchemy import DateTime, ForeignKey, UUID, VARCHAR, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -22,8 +23,8 @@ class AuditLog(Base):
     )
     action: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
     entity_type: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
-    entity_id: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
-    details: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    details: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     actor: Mapped[User | None] = relationship(back_populates="audit_logs")

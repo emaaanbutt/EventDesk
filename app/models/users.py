@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.models.events import Event
     from app.models.notifications import Notification
     from app.models.refresh_tokens import RefreshToken
-    from app.models.review_mentions import ReviewMention
+    from app.models.review_mentions import ReviewReply
     from app.models.reviews import Review
 
 
@@ -52,9 +52,8 @@ class User(Base, TimeStamp):
     )
     audit_logs: Mapped[list[AuditLog]] = relationship(
         back_populates="actor",
-        cascade="all, delete-orphan",
     )
-    review_mentions: Mapped[list[ReviewMention]] = relationship(
-        back_populates="mentioned_user",
+    review_replies: Mapped[list[ReviewReply]] = relationship(
+        back_populates="author",
         cascade="all, delete-orphan",
     )

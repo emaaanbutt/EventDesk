@@ -19,7 +19,7 @@ class BookingStatus(StrEnum):
     confirmed = "confirmed"
 
 
-class BookingType(StrEnum):
+class NotificationType(StrEnum):
     booking_confirmed = "booking_confirmed"
     booking_cancelled = "booking_cancelled"
     new_review = "new_review"
