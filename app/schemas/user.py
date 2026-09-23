@@ -1,10 +1,22 @@
 import re
-from enum import Enum
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models.enums import Role
+
+
+def validate_password_strength(value: str) -> str:
+    if len(value) < 8 or len(value.encode("utf-8")) > 72:
+        raise ValueError("Password must be at least 8 characters and at most 72 UTF-8 bytes.")
+    if not any(char.isdigit() for char in value):
+        raise ValueError("Password must contain at least one digit.")
+    if not any(char.isupper() for char in value):
+        raise ValueError("Password must contain at least one uppercase letter.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>_+-]", value):
+        raise ValueError("Password must contain at least one special character.")
+    return value
 
 class UserBase(BaseModel):
     name: str = Field(
@@ -48,27 +60,15 @@ class UserCreate(UserBase):
     password: str = Field(
         ...,
         min_length=8,
-        max_length=128,
+        max_length=72,
         description="Password for the user account.",
     )
 
-    role: Literal["organizer", "attendee"] = Field(default="attendee")
+    role: Literal["organizer", "attendee"]
 
     @field_validator("password")
     def validate_password(cls, value:str) -> str:
-        if len(value)<8 or len(value)>128:
-            raise ValueError("Passowrd must be in the range of 8 to 128 characters.")
-
-        if not any(char.isdigit() for char in value):
-            raise ValueError("Password must contain at least one digit.")
-
-        if not any(char.isupper() for char in value):
-            raise ValueError("Password must contain at least one uppercase letter.")
-
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>_+-]", value):
-            raise ValueError("Password must contain at least one special character.")
-
-        return value
+        return validate_password_strength(value)
 
     model_config = ConfigDict(
             from_attributes=True,
@@ -78,7 +78,7 @@ class UserCreate(UserBase):
 
 
 class UserResponse(UserBase):
-    id: str
+    id: UUID
     role: Role
     is_active: bool
 
