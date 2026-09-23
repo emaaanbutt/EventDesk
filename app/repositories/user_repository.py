@@ -51,7 +51,13 @@ class UserRepository:
         return user
 
 
-    
+    @staticmethod
+    async def get_users(db:AsyncSession=Depends(get_db)):
+        stmt = select(User)
+        result = db.execute(stmt)
+        users = result.scalars().all()
+
+        return users
 
 
 
