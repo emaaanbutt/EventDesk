@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -33,3 +35,63 @@ class BookingRepository:
             .distinct()
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    async def create_booking(
+        event_id: UUID,
+        attendee_id: UUID,
+        quantity: int,
+        total_amount: Decimal,
+        db: AsyncSession,
+    ) -> Booking:
+        booking = Booking(
+            event_id=event_id,
+            attendee_id=attendee_id,
+            quantity=quantity,
+            total_amount=total_amount,
+            status=BookingStatus.confirmed,
+            booked_at=datetime.now(timezone.UTC),
+        )
+        db.add(booking)
+        await db.flush()
+        await db.refresh(booking)
+        return booking
+
+    @staticmethod
+    async def get_by_id(booking_id: UUID, db: AsyncSession) -> Booking | None:
+        result = await db.execute(
+            select(Booking).where(Booking.id == booking_id, Booking.deleted_at.is_(None))
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_by_id_for_update(booking_id: UUID, db: AsyncSession) -> Booking | None:
+        result = await db.execute(
+            select(Booking)
+            .where(Booking.id == booking_id, Booking.deleted_at.is_(None))
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def cancel_booking(booking: Booking, db: AsyncSession) -> Booking:
+        booking.status = BookingStatus.cancelled
+        booking.cancelled_at = datetime.now(timezone.UTC)
+        await db.flush()
+        await db.refresh(booking, attribute_names=["updated_at"])
+        return booking
+
+    @staticmethod
+    async def list_bookings_for_user(
+        user_id: UUID, page: int, page_size: int, db: AsyncSession
+    ) -> tuple[list[Booking], int]:
+        conditions = (Booking.attendee_id == user_id, Booking.deleted_at.is_(None))
+        count_result = await db.execute(select(func.count(Booking.id)).where(*conditions))
+        result = await db.execute(
+            select(Booking)
+            .where(*conditions)
+            .order_by(Booking.booked_at.desc(), Booking.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        return list(result.scalars().all()), count_result.scalar_one()
