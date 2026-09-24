@@ -31,7 +31,7 @@ async def update_my_password(
     await user_service.change_password(actor, payload.current_password, payload.new_password, db)
 
 
-@router.get("", response_model=list[UserResponse])
+@router.get("/", response_model=list[UserResponse])
 async def get_users(
     actor: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

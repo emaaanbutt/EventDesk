@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import EventStatus
+from app.schemas.catalog import CategoryResponse, TagResponse
 
 
 def _strip_text(value: str | None) -> str | None:
@@ -71,20 +72,6 @@ class EventUpdate(BaseModel):
         return self
 
     model_config = ConfigDict(extra="forbid")
-
-
-class CategoryResponse(BaseModel):
-    id: UUID
-    name: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TagResponse(BaseModel):
-    id: UUID
-    name: str
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class EventResponse(BaseModel):

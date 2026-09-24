@@ -17,6 +17,8 @@ class Action(StrEnum):
     events_cancel = "events.cancel"
     events_view_published = "events.view_published"
     events_view_own = "events.view_own"
+    categories_create = "categories.create"
+    tags_create = "tags.create"
     bookings_create = "bookings.create"
     bookings_cancel = "bookings.cancel"
     reviews_create = "reviews.create"
@@ -41,6 +43,8 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.events_cancel: PermissionScope.any,
         Action.events_view_published: PermissionScope.global_,
         Action.events_view_own: PermissionScope.global_,
+        Action.categories_create: PermissionScope.global_,
+        Action.tags_create: PermissionScope.global_,
         Action.bookings_create: PermissionScope.global_,
         Action.bookings_cancel: PermissionScope.any,
         Action.reviews_create: PermissionScope.global_,

@@ -60,7 +60,7 @@ def _ensure_publishable(event: Event) -> None:
         raise HTTPException(status_code=409, detail="Only a draft event can be published")
     if event.starts_at.tzinfo is None or event.starts_at.utcoffset() is None:
         raise HTTPException(status_code=409, detail="Event start time has no timezone")
-    if event.starts_at <= datetime.now(timezone.UTC):
+    if event.starts_at <= datetime.now(timezone.utc):
         raise HTTPException(status_code=409, detail="Event start time must be in the future")
 
 
