@@ -12,7 +12,6 @@ from app.services import user_service
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-
 @router.patch("/me", response_model=UserResponse)
 async def update_my_profile(
     payload: UserUpdate,
