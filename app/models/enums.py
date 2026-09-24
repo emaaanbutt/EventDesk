@@ -18,6 +18,10 @@ class BookingStatus(StrEnum):
     cancelled = "cancelled"
     confirmed = "confirmed"
 
+class NotificationCategory(StrEnum):
+    booking = "booking"
+    event = "event"
+    review = "review"
 
 class NotificationType(StrEnum):
     booking_confirmed = "booking_confirmed"
@@ -26,7 +30,6 @@ class NotificationType(StrEnum):
     new_review = "new_review"
     review_reply = "review_reply"
     event_reminder = "event_reminder"
-
 
 class PermissionScope(StrEnum):
     global_ = "global"
