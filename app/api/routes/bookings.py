@@ -31,6 +31,15 @@ async def get_my_bookings(
     return await booking_service.get_my_bookings(actor, filters, db)
 
 
+@router.get("", response_model=BookingListResponse)
+async def get_all_bookings(
+    filters: Annotated[BookingFilters, Query()],
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> BookingListResponse:
+    return await booking_service.get_all_bookings(actor, filters, db)
+
+
 @router.post("/{booking_id}/cancel", response_model=BookingResponse)
 async def cancel_booking(
     booking_id: UUID,

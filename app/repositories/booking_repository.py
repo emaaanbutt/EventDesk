@@ -96,3 +96,18 @@ class BookingRepository:
             .limit(page_size)
         )
         return list(result.scalars().all()), count_result.scalar_one()
+
+    @staticmethod
+    async def list_all_bookings(
+        page: int, page_size: int, db: AsyncSession
+    ) -> tuple[list[Booking], int]:
+        condition = Booking.deleted_at.is_(None)
+        count_result = await db.execute(select(func.count(Booking.id)).where(condition))
+        result = await db.execute(
+            select(Booking)
+            .where(condition)
+            .order_by(Booking.booked_at.desc(), Booking.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        return list(result.scalars().all()), count_result.scalar_one()

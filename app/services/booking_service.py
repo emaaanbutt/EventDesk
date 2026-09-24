@@ -78,8 +78,6 @@ async def cancel_booking(actor: User, booking_id: UUID, db: AsyncSession) -> Boo
         authorize(actor, Action.bookings_cancel, owner_id=booking.attendee_id)
         if booking.status == BookingStatus.cancelled:
             raise HTTPException(status_code=409, detail="Booking is already cancelled")
-        if booking.status != BookingStatus.confirmed:
-            raise HTTPException(status_code=409, detail="Booking cannot be cancelled")
 
         booking = await BookingRepository.cancel_booking(booking, db)
         await NotificationRepository.create_booking_cancellation_notification(booking, event, db)
@@ -98,6 +96,7 @@ async def get_my_bookings(
     actor: User, filters: BookingFilters, db: AsyncSession
 ) -> BookingListResponse:
     _require_available(actor)
+    authorize(actor, Action.bookings_view, owner_id=actor.id)
     bookings, total = await BookingRepository.list_bookings_for_user(
         actor.id, filters.page, filters.page_size, db
     )
@@ -108,3 +107,18 @@ async def get_my_bookings(
         page_size=filters.page_size,
     )
 
+
+async def get_all_bookings(
+    actor: User, filters: BookingFilters, db: AsyncSession
+) -> BookingListResponse:
+    _require_available(actor)
+    authorize(actor, Action.bookings_view)
+    bookings, total = await BookingRepository.list_all_bookings(
+        filters.page, filters.page_size, db
+    )
+    return BookingListResponse(
+        items=[BookingResponse.model_validate(booking) for booking in bookings],
+        total=total,
+        page=filters.page,
+        page_size=filters.page_size,
+    )
