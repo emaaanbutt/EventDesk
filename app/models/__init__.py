@@ -6,7 +6,7 @@ from app.models.events import Event
 from app.models.notifications import Notification
 from app.models.permissions import Permission
 from app.models.refresh_tokens import RefreshToken
-from app.models.review_mentions import ReviewReply
+from app.models.review_replies import ReviewReply
 from app.models.reviews import Review
 from app.models.role_permissions import RolePermission
 from app.models.tags import Tag

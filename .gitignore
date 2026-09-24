@@ -5,6 +5,7 @@ __pycache__/
 
 .env
 !.env.example
+.local-postgres/
 
 .pytest_cache/
 .mypy_cache/

@@ -1,62 +1,81 @@
-from app.db.session import get_db
+from __future__ import annotations
+
+from datetime import datetime
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Depends
+
+from app.models.enums import Role
 from app.models.users import User
-from schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserUpdate
 
 
 class UserRepository:
     @staticmethod
-    async def search_user_by_email(email:str, db: AsyncSession=Depends(get_db())) -> User | None:
-        result = select(User).where(User.email == email)
-        return await result.scalar_one_or_none()
+    async def get_by_email(email: str, db: AsyncSession) -> User | None:
+        result = await db.execute(select(User).where(User.email == email.lower().strip()))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    async def search_user_by_id(id:int, db:AsyncSession=Depends(get_db)) -> User | None:
-        result = select(User).where(User.id==id)
-        return await result.scalar_one_or_none()
+    async def get_by_id(user_id: UUID | str, db: AsyncSession) -> User | None:
+        result = await db.execute(select(User).where(User.id == user_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    async def create_user(user: UserCreate, db:AsyncSession=Depends(get_db)):
-        new_user = User(name=user.name, 
-                        email=user.email)
-
-        try:
-            db.add(new_user)
-            db.commit(new_user)
-            db.refresh(new_user)
-            return new_user
-        except IntegrityError:
-            db.rollback()
+    async def create_user(
+        name: str, email: str, password_hash: str, role: Role, db: AsyncSession
+    ) -> User:
+        user = User(
+            name=name,
+            email=email,
+            password_hash=password_hash,
+            role=role,
+            is_active=True,
+        )
+        db.add(user)
+        await db.flush()
+        return user
 
     @staticmethod
-    async def update_user(user_id:str, user: UserUpdate, db:AsyncSession=Depends(get_db)):
-        user = db.get(User, user_id)
+    async def update_user(user_id: UUID | str, payload: UserUpdate, db: AsyncSession) -> User | None:
+        user = await UserRepository.get_by_id(user_id, db)
+        if user is None:
+            return None
 
-        update_data = user.model_dump(exclude_unset=True)
-
+        update_data = payload.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(user, field, value)
 
-        try:
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-
-        except IntegrityError:
-            db.rollback()
-
+        await db.flush()
         return user
 
+    @staticmethod
+    async def get_all(db: AsyncSession) -> list[User]:
+        result = await db.execute(
+            select(User).where(User.deleted_at.is_(None)).order_by(User.created_at.desc())
+        )
+        return list(result.scalars().all())
 
-    
+    @staticmethod
+    async def set_active(user: User, is_active: bool, db: AsyncSession) -> User:
+        user.is_active = is_active
+        await db.flush()
+        return user
 
-    
+    @staticmethod
+    async def set_role(user: User, role: Role, db: AsyncSession) -> User:
+        user.role = role
+        await db.flush()
+        return user
 
+    @staticmethod
+    async def set_password_hash(user: User, password_hash: str, db: AsyncSession) -> None:
+        user.password_hash = password_hash
+        await db.flush()
 
-
-
-
-    
+    @staticmethod
+    async def soft_delete(user: User, deleted_at: datetime, db: AsyncSession) -> None:
+        user.deleted_at = deleted_at
+        user.is_active = False
+        await db.flush()
