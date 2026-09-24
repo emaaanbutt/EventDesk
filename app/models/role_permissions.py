@@ -22,7 +22,14 @@ class RolePermission(Base):
     permission_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False
     )
-    scope: Mapped[PermissionScope] = mapped_column(Enum(PermissionScope, name="permission_scope"), nullable=False)
+    scope: Mapped[PermissionScope] = mapped_column(
+        Enum(
+            PermissionScope,
+            name="permission_scope",
+            values_callable=lambda enum: [item.value for item in enum],
+        ),
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     __table_args__ = (
@@ -30,4 +37,3 @@ class RolePermission(Base):
     )
 
     permission: Mapped[Permission] = relationship(back_populates="role_permissions")
-   

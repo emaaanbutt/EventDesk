@@ -1,6 +1,6 @@
 # EventDesk
 
-EventDesk is a FastAPI-based backend for an event management platform. The project currently focuses on the auth, user management, and role-based access flow.
+EventDesk is a FastAPI backend for an event management platform. Auth, user management, roles, and event management are available.
 
 This is a layered app:
 - Routes accept HTTP requests
@@ -23,8 +23,10 @@ The current version includes:
 - Admin-only user listing, role updates, activation toggles, and soft delete
 - Health checks for the API and database
 - PostgreSQL async connection using SQLAlchemy
+- Event creation, editing, publishing, completion, cancellation, and public browsing
+- Categories, tags, and cancellation notifications
 
-This is a solid backend foundation for the EventDesk platform, and the auth + user system is the main completed part so far.
+Booking and review API flows are future work; their database tables are already included in the migrations.
 
 ---
 
@@ -108,17 +110,24 @@ This folder contains API endpoints.
 - [app/api/routes/auth.py](app/api/routes/auth.py): register, login, refresh, logout, me
 - [app/api/routes/users.py](app/api/routes/users.py): profile and admin user actions
 - [app/api/routes/health.py](app/api/routes/health.py): health endpoints
+- [app/api/routes/events.py](app/api/routes/events.py): event management and public browsing
+- [app/api/routes/categories.py](app/api/routes/categories.py) and [app/api/routes/tags.py](app/api/routes/tags.py): catalog endpoints
+- [app/api/routes/notifications.py](app/api/routes/notifications.py): current user's notifications
 
 ### [app/services](app/services)
 This is where business logic lives.
 - [app/services/auth_service.py](app/services/auth_service.py): auth logic
 - [app/services/user_service.py](app/services/user_service.py): profile and admin user rules
 - [app/services/authorization_service.py](app/services/authorization_service.py): permission checks
+- [app/services/event_service.py](app/services/event_service.py): event rules and status changes
+- [app/services/notification_service.py](app/services/notification_service.py): notification access
 
 ### [app/repositories](app/repositories)
 Repositories handle database queries.
 - [app/repositories/user_repository.py](app/repositories/user_repository.py): user lookups and updates
 - [app/repositories/refresh_token_repository.py](app/repositories/refresh_token_repository.py): refresh token storage and rotation
+- [app/repositories/event_repository.py](app/repositories/event_repository.py): event queries and persistence
+- [app/repositories/notification_repository.py](app/repositories/notification_repository.py): notification queries and persistence
 
 ### [app/models](app/models)
 This is the database model layer.
@@ -153,10 +162,10 @@ From the project root:
 uv sync --frozen
 ```
 
-The local PostgreSQL cluster is stored in `.local-postgres/data`. Start it if it is stopped:
+This workspace's local PostgreSQL cluster is stored in `.local-postgres/data-v2`. Start it if it is stopped:
 
 ```bash
-/usr/lib/postgresql/16/bin/pg_ctl -D .local-postgres/data -l .local-postgres/server.log -o '-h 127.0.0.1 -p 55432 -k /tmp' start
+/usr/lib/postgresql/16/bin/pg_ctl -D .local-postgres/data-v2 -l .local-postgres/server-v2.log -o '-h 127.0.0.1 -p 55432 -k /tmp' start
 ```
 
 The local [.env](.env) already has a working connection. For another machine, copy `.env.example` to `.env` and set the actual database password and a secret key of at least 32 characters.
@@ -164,17 +173,18 @@ The local [.env](.env) already has a working connection. For another machine, co
 Example:
 
 ```env
-DATABASE_URL=postgresql+asyncpg://eventdesk:YOUR_DATABASE_PASSWORD@127.0.0.1:55432/eventdesk_auth
+DATABASE_URL=postgresql+asyncpg://eventdesk:YOUR_DATABASE_PASSWORD@127.0.0.1:55432/eventdesk
 SECRET_KEY=REPLACE_WITH_AT_LEAST_32_RANDOM_CHARACTERS
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
 
-Apply the auth migration, then start the app:
+Apply both migrations, verify that the ORM models match PostgreSQL, then start the app:
 
 ```bash
 .venv/bin/alembic upgrade head
+.venv/bin/alembic check
 .venv/bin/uvicorn app.main:app --reload
 ```
 
@@ -188,6 +198,16 @@ After one active admin exists, use the admin role-change endpoint to promote oth
 
 Open the docs here:
 - http://127.0.0.1:8000/docs
+
+After changing a model, create and inspect a new migration before applying it:
+
+```bash
+.venv/bin/alembic revision --autogenerate -m "describe your model change"
+.venv/bin/alembic upgrade head
+.venv/bin/alembic check
+```
+
+Alembic records applied revisions in `alembic_version`. Existing tables by themselves do not mark a migration as applied. If you use a different database that already has manually created tables, inspect its schema and revision before applying these migrations; do not stamp an unverified schema. The old `.local-postgres/data` directory was incomplete and has been left untouched.
 
 ---
 
@@ -206,17 +226,16 @@ The following is done and working in the project structure:
 - Role-based authorization checks
 - Health endpoints for API and database
 - Clean service/repository separation
+- Event management routes and public event filtering/sorting
+- Migration covering all current models; verified with `alembic check`
 
 ---
 
 ## Still in progress / next layer
 
 The event platform is not fully finished yet. The next likely work items are:
-- event CRUD
 - booking flow
 - review system
-- notification system
-- more advanced permission model tied to real database policies
-- migration cleanup and schema verification across all models
+- additional notification flows beyond event cancellation
 
-The auth and user foundation is already in place and is the most complete part of the project right now.
+Auth, users, and events are ready to run locally. Booking and review endpoints can be built on the migrated tables next.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, UUID
@@ -21,7 +22,7 @@ class Booking(Base, TimeStamp):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    total_amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     status: Mapped[BookingStatus] = mapped_column(Enum(BookingStatus, name="booking_status"), nullable=False)
     booked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

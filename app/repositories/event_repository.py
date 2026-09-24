@@ -82,6 +82,7 @@ class EventRepository:
     async def set_status(event: Event, status: EventStatus, db: AsyncSession) -> Event:
         event.status = status
         await db.flush()
+        await db.refresh(event, attribute_names=["updated_at"])
         return event
 
     @staticmethod
