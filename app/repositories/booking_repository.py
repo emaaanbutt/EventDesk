@@ -50,7 +50,7 @@ class BookingRepository:
             quantity=quantity,
             total_amount=total_amount,
             status=BookingStatus.confirmed,
-            booked_at=datetime.now(timezone.UTC),
+            booked_at=datetime.now(timezone.utc),
         )
         db.add(booking)
         await db.flush()
@@ -70,13 +70,14 @@ class BookingRepository:
             select(Booking)
             .where(Booking.id == booking_id, Booking.deleted_at.is_(None))
             .with_for_update()
+            .execution_options(populate_existing=True)
         )
         return result.scalar_one_or_none()
 
     @staticmethod
     async def cancel_booking(booking: Booking, db: AsyncSession) -> Booking:
         booking.status = BookingStatus.cancelled
-        booking.cancelled_at = datetime.now(timezone.UTC)
+        booking.cancelled_at = datetime.now(timezone.utc)
         await db.flush()
         await db.refresh(booking, attribute_names=["updated_at"])
         return booking
