@@ -22,6 +22,7 @@ class BookingStatus(StrEnum):
 class NotificationType(StrEnum):
     booking_confirmed = "booking_confirmed"
     booking_cancelled = "booking_cancelled"
+    event_cancelled = "event_cancelled"
     new_review = "new_review"
     review_reply = "review_reply"
     event_reminder = "event_reminder"

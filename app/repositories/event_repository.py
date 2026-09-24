@@ -36,6 +36,16 @@ class EventRepository:
         return result.scalar_one_or_none()
 
     @staticmethod
+    async def get_by_id_for_update(event_id: UUID, db: AsyncSession) -> Event | None:
+        result = await db.execute(
+            select(Event)
+            .options(selectinload(Event.category), selectinload(Event.tags))
+            .where(Event.id == event_id, Event.deleted_at.is_(None))
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
     async def create_event(
         values: dict[str, Any],
         organizer_id: UUID,

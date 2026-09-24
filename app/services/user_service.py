@@ -1,5 +1,3 @@
-"""User business rules. Routes call these functions; repositories perform SQL writes."""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone

@@ -12,8 +12,11 @@ class Action(StrEnum):
     users_delete = "users.delete"
     events_create = "events.create"
     events_edit = "events.edit"
+    events_publish = "events.publish"
+    events_complete = "events.complete"
     events_cancel = "events.cancel"
     events_view_published = "events.view_published"
+    events_view_own = "events.view_own"
     bookings_create = "bookings.create"
     bookings_cancel = "bookings.cancel"
     reviews_create = "reviews.create"
@@ -33,8 +36,11 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.users_delete: PermissionScope.any,
         Action.events_create: PermissionScope.global_,
         Action.events_edit: PermissionScope.any,
+        Action.events_publish: PermissionScope.any,
+        Action.events_complete: PermissionScope.any,
         Action.events_cancel: PermissionScope.any,
         Action.events_view_published: PermissionScope.global_,
+        Action.events_view_own: PermissionScope.global_,
         Action.bookings_create: PermissionScope.global_,
         Action.bookings_cancel: PermissionScope.any,
         Action.reviews_create: PermissionScope.global_,
@@ -49,8 +55,11 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.password_change: PermissionScope.self,
         Action.events_create: PermissionScope.global_,
         Action.events_edit: PermissionScope.own_event,
+        Action.events_publish: PermissionScope.own_event,
+        Action.events_complete: PermissionScope.own_event,
         Action.events_cancel: PermissionScope.own_event,
         Action.events_view_published: PermissionScope.global_,
+        Action.events_view_own: PermissionScope.global_,
         Action.bookings_create: PermissionScope.global_,
         Action.bookings_cancel: PermissionScope.own,
         Action.reviews_create: PermissionScope.global_,
