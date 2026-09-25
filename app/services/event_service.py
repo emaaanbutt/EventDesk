@@ -188,6 +188,7 @@ async def cancel_event(
             message=f"{event.title} has been cancelled.",
             event_id=event.id,
             booking_id=None,
+            review_id=None
         )
     return response
 

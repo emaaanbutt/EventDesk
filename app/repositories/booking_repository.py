@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.bookings import Booking
 from app.models.enums import BookingStatus
 
-
 class BookingRepository:
     @staticmethod
     async def get_confirmed_ticket_count(event_id: UUID, db: AsyncSession) -> int:
@@ -100,16 +99,15 @@ class BookingRepository:
         return list(result.scalars().all()), count_result.scalar_one()
 
     @staticmethod
-    async def list_all_bookings(
-        page: int, page_size: int, db: AsyncSession
-    ) -> tuple[list[Booking], int]:
-        condition = Booking.deleted_at.is_(None)
-        count_result = await db.execute(select(func.count(Booking.id)).where(condition))
+    async def has_confirmed_booking(event_id: UUID, user_id: UUID, db: AsyncSession) -> bool:
         result = await db.execute(
-            select(Booking)
-            .where(condition)
-            .order_by(Booking.booked_at.desc(), Booking.id.desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
+            select(Booking.id)
+            .where(
+                Booking.event_id == event_id,
+                Booking.attendee_id == user_id,
+                Booking.deleted_at.is_(None),
+                Booking.status == BookingStatus.confirmed,
+            )
+            .limit(1)
         )
-        return list(result.scalars().all()), count_result.scalar_one()
+        return result.scalar_one_or_none() is not None

@@ -31,10 +31,11 @@ async def save_notifications_in_background(
     message: str,
     event_id: UUID | None,
     booking_id: UUID | None,
+    review_id: UUID | None
 ) -> None:
     async with AsyncSessionLocal() as db:
         await NotificationRepository.create_for_users(
-            user_ids, category, title, message, event_id, booking_id, db
+            user_ids, category, title, message, event_id, booking_id, review_id, db
         )
         await db.commit()
 

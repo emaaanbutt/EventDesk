@@ -41,6 +41,7 @@ class NotificationRepository:
         message: str,
         event_id: UUID | None,
         booking_id: UUID | None,
+        review_id: UUID| None,
         db: AsyncSession,
     ) -> None:
         notifications = [
@@ -48,6 +49,7 @@ class NotificationRepository:
                 user_id=user_id,
                 event_id=event_id,
                 booking_id=booking_id,
+                review_id=review_id,
                 type=category,
                 title=title,
                 message=message,
