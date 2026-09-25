@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.role_policy import Action
+from app.db.session import AsyncSessionLocal
+from app.models.enums import NotificationCategory
 from app.models.users import User
 from app.repositories.notification_repository import NotificationRepository
 from app.schemas.notifications import (
@@ -20,6 +22,21 @@ from app.services.authorization_service import authorize
 def _require_available(actor: User) -> None:
     if not actor.is_active or actor.deleted_at is not None:
         raise HTTPException(status_code=403, detail="User account is unavailable")
+
+
+async def save_notifications_in_background(
+    user_ids: list[UUID],
+    category: NotificationCategory,
+    title: str,
+    message: str,
+    event_id: UUID | None,
+    booking_id: UUID | None,
+) -> None:
+    async with AsyncSessionLocal() as db:
+        await NotificationRepository.create_for_users(
+            user_ids, category, title, message, event_id, booking_id, db
+        )
+        await db.commit()
 
 
 async def get_my_notifications(

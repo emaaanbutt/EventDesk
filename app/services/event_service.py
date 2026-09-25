@@ -3,19 +3,19 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import HTTPException
+from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.role_policy import Action
-from app.models.enums import EventStatus
+from app.models.enums import EventStatus, NotificationCategory
 from app.models.events import Event
 from app.models.tags import Tag
 from app.models.users import User
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.event_repository import EventRepository
-from app.repositories.notification_repository import NotificationRepository
 from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate
+from app.services import notification_service
 from app.services.authorization_service import authorize
 
 
@@ -163,7 +163,9 @@ async def complete_event(actor: User, event_id: UUID, db: AsyncSession) -> Event
     return _to_response(event)
 
 
-async def cancel_event(actor: User, event_id: UUID, db: AsyncSession) -> EventResponse:
+async def cancel_event(
+    actor: User, event_id: UUID, db: AsyncSession, background_tasks: BackgroundTasks
+) -> EventResponse:
     _require_available(actor)
     event = await _get_event_for_change_or_404(event_id, db)
     authorize(actor, Action.events_cancel, owner_id=event.organizer_id)
@@ -172,12 +174,22 @@ async def cancel_event(actor: User, event_id: UUID, db: AsyncSession) -> EventRe
     try:
         attendee_ids = await BookingRepository.get_confirmed_attendee_ids(event.id, db)
         await EventRepository.set_status(event, EventStatus.cancelled, db)
-        await NotificationRepository.create_event_cancellation_notifications(event, attendee_ids, db)
+        response = _to_response(event)
         await db.commit()
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Event could not be cancelled") from None
-    return _to_response(event)
+    if attendee_ids:
+        background_tasks.add_task(
+            notification_service.save_notifications_in_background,
+            user_ids=attendee_ids,
+            category=NotificationCategory.event,
+            title="Event cancelled",
+            message=f"{event.title} has been cancelled.",
+            event_id=event.id,
+            booking_id=None,
+        )
+    return response
 
 
 async def list_published_events(filters: EventFilters, db: AsyncSession) -> EventListResponse:
