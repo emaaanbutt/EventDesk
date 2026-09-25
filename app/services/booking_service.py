@@ -66,6 +66,7 @@ async def create_booking(
         message=f"Your booking for {event.title} is confirmed.",
         event_id=event.id,
         booking_id=booking.id,
+        review_id=None
     )
     return response
 
@@ -110,6 +111,7 @@ async def cancel_booking(
         message=f"Your booking for {event.title} has been cancelled.",
         event_id=event.id,
         booking_id=booking.id,
+        review_id=None
     )
     return response
 
