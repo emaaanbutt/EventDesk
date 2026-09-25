@@ -14,7 +14,7 @@ from app.services import event_service
 router = APIRouter(prefix="/events", tags=["events"])
 
 
-@router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
 async def create_event(
     payload: EventCreate,
     actor: User = Depends(get_current_user),
@@ -23,7 +23,7 @@ async def create_event(
     return await event_service.create_event(actor, payload, db)
 
 
-@router.get("", response_model=EventListResponse)
+@router.get("/", response_model=EventListResponse)
 async def list_published_events(
     filters: Annotated[EventFilters, Query()],
     db: AsyncSession = Depends(get_db),

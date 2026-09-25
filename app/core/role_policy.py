@@ -20,6 +20,7 @@ class Action(StrEnum):
     categories_create = "categories.create"
     tags_create = "tags.create"
     bookings_create = "bookings.create"
+    bookings_view = "bookings.view"
     bookings_cancel = "bookings.cancel"
     reviews_create = "reviews.create"
     reviews_reply = "reviews.reply"
@@ -46,6 +47,7 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.categories_create: PermissionScope.global_,
         Action.tags_create: PermissionScope.global_,
         Action.bookings_create: PermissionScope.global_,
+        Action.bookings_view: PermissionScope.any,
         Action.bookings_cancel: PermissionScope.any,
         Action.reviews_create: PermissionScope.global_,
         Action.reviews_reply: PermissionScope.any,
@@ -65,6 +67,7 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.events_view_published: PermissionScope.global_,
         Action.events_view_own: PermissionScope.global_,
         Action.bookings_create: PermissionScope.global_,
+        Action.bookings_view: PermissionScope.own,
         Action.bookings_cancel: PermissionScope.own,
         Action.reviews_create: PermissionScope.global_,
         Action.reviews_reply: PermissionScope.own_event,
@@ -77,6 +80,7 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.password_change: PermissionScope.self,
         Action.events_view_published: PermissionScope.global_,
         Action.bookings_create: PermissionScope.global_,
+        Action.bookings_view: PermissionScope.own,
         Action.bookings_cancel: PermissionScope.own,
         Action.reviews_create: PermissionScope.global_,
         Action.reviews_edit: PermissionScope.own,
