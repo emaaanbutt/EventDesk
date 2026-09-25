@@ -55,21 +55,17 @@ async def create_booking(actor: User, payload: BookingCreate, db: AsyncSession) 
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Booking could not be completed") from None
-    except Exception:
-        await db.rollback()
-        raise
 
 
 async def cancel_booking(actor: User, booking_id: UUID, db: AsyncSession) -> BookingResponse:
     _require_available(actor)
 
     try:
-        existing = await BookingRepository.get_by_id(booking_id, db)
-        if existing is None:
+        event_id = await BookingRepository.get_event_id(booking_id, db)
+        if event_id is None:
             raise HTTPException(status_code=404, detail="Booking not found")
-        authorize(actor, Action.bookings_cancel, owner_id=existing.attendee_id)
 
-        event = await EventRepository.get_by_id_for_update(existing.event_id, db)
+        event = await EventRepository.get_by_id_for_update(event_id, db)
         if event is None:
             raise HTTPException(status_code=404, detail="Event not found")
         booking = await BookingRepository.get_by_id_for_update(booking_id, db)
@@ -87,9 +83,6 @@ async def cancel_booking(actor: User, booking_id: UUID, db: AsyncSession) -> Boo
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Booking could not be cancelled") from None
-    except Exception:
-        await db.rollback()
-        raise
 
 
 async def get_my_bookings(
