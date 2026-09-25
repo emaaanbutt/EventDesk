@@ -9,15 +9,19 @@ from app.models.bookings import Booking
 from app.models.enums import NotificationType
 from app.models.events import Event
 from app.models.notifications import Notification
+from app.schemas.notifications import NotificationFilters
 
 
 class NotificationRepository:
     @staticmethod
-    async def list_for_user(user_id: UUID, db: AsyncSession) -> list[Notification]:
+    async def list_for_user(user_id: UUID, filters: NotificationFilters, db: AsyncSession) -> list[Notification]:
         result = await db.execute(
             select(Notification)
             .where(Notification.user_id == user_id, Notification.deleted_at.is_(None))
             .order_by(Notification.created_at.desc(), Notification.id.asc())
+            .filter(filters.type == Notification.type)
+            .offset((filters.page -1)* filters.page_size)
+            .limit(filters.page_size)
         )
         return list(result.scalars().all())
 
@@ -73,3 +77,5 @@ class NotificationRepository:
             )
         )
         await db.flush()
+
+    
