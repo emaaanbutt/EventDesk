@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reviews import Review
-
+from app.models.review_replies import ReviewReply
 
 class ReviewRepository:
     @staticmethod
@@ -23,7 +23,7 @@ class ReviewRepository:
     async def get_by_author_and_event(author_id: UUID, event_id: UUID, db: AsyncSession) -> Review | None:
         result = await db.execute(
             select(Review)
-            .where(Review.author_id == author_id and Review.event_id == event_id)
+            .where(Review.author_id == author_id, Review.event_id == event_id)
         )
 
         return result.scalar_one_or_none()
@@ -31,7 +31,7 @@ class ReviewRepository:
 
     @staticmethod
     async def create_review(event_id: UUID, author_id: UUID, rating: int, comment: str, db: AsyncSession) -> Review:
-        review = await Review(
+        review = Review(
             author_id = author_id,
             event_id = event_id,
             rating = rating,
@@ -44,5 +44,62 @@ class ReviewRepository:
 
     @staticmethod
     async def update_review(review: Review, changes: dict[str, Any], db: AsyncSession) -> Review:
+        for field, val in changes.items():
+            setattr(review, field, val)
+
+        await db.flush()
+        await db.refresh(review, attribute_names=["updated_at"])
+        return review
+
+    @staticmethod
+    async def soft_delete(review: Review, db: AsyncSession) -> None:
+        deleted_at = datetime.now(timezone.UTC)
+        review.deleted_at = deleted_at
+        await db.flush()
+
+    @staticmethod
+    async def list_reviews_for_event(event_id: UUID, page: int, page_size: int, db: AsyncSession) -> tuple[list[Review], int]:
+        conditions = (Review.event_id == event_id, Review.deleted_at.is_(None))
+        count_result = await db.execute(select(func.count(Review.id)).where(*conditions))
+        result = await db.execute(
+            select(Review)
+            .where(*conditions)
+            .order_by(Review.created_at.desc(), Review.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+
+        return list(result.scalars().all()), count_result.scalar_one()
 
 
+    @staticmethod
+    async def get_reply_by_author(review_id: UUID, author_id: UUID, db:AsyncSession) -> ReviewReply | None:
+        result = await db.execute(
+            select(ReviewReply)
+            .where(ReviewReply.review_id == review_id, ReviewReply.author_id == author_id)
+        )
+
+        return result.scalar_one_or_none()
+
+
+    @staticmethod
+    async def create_reply(review_id: UUID, author_id: UUID, comment: str, db:AsyncSession) -> ReviewReply:
+        reply = ReviewReply(
+            author_id = author_id,
+            review_id = review_id,
+            comment = comment
+        )
+
+        db.add(reply)
+        await db.flush()
+        await db.refresh(reply, attribute_names=["created_at", "updated_at"])
+        return reply
+
+    @staticmethod
+    async def list_replies(review_id: UUID, db: AsyncSession) -> list[ReviewReply]:
+        result = await db.execute(
+            select(ReviewReply)
+            .where(ReviewReply.review_id == review_id, ReviewReply.deleted_at.is_(None))
+            .order_by(ReviewReply.created_at.asc(), ReviewReply.id.asc())
+        )
+        return list(result.scalars().all())

@@ -98,11 +98,14 @@ class BookingRepository:
 
     @staticmethod
     async def has_confirmed_booking(event_id: UUID, user_id: UUID, db: AsyncSession) -> bool:
-        result = db.execute(
-            select(Booking)
-            .where(Booking.event_id == event_id and Booking.attendee_id == user_id and Booking.deleted_at.is_(None) and Booking.status == BookingStatus.confirmed)
+        result = await db.execute(
+            select(Booking.id)
+            .where(
+                Booking.event_id == event_id,
+                Booking.attendee_id == user_id,
+                Booking.deleted_at.is_(None),
+                Booking.status == BookingStatus.confirmed,
+            )
+            .limit(1)
         )
-
-        return bool(result)
-
-    
+        return result.scalar_one_or_none() is not None
