@@ -70,7 +70,7 @@ async def set_notification_read_state(
         await db.commit()
         return response
 
-    read_at = datetime.now(timezone.UTC) if payload.is_read else None
+    read_at = datetime.now(timezone.utc) if payload.is_read else None
     try:
         notification = await NotificationRepository.set_read_state(
             notification, payload.is_read, read_at, db

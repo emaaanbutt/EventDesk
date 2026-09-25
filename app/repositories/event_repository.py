@@ -19,6 +19,7 @@ EVENT_FIELDS = {
     "description",
     "venue",
     "starts_at",
+    "ends_at",
     "ticket_price",
     "total_tickets",
     "category_id",

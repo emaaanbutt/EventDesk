@@ -67,10 +67,10 @@ def _ensure_publishable(event: Event) -> None:
 def _ensure_completable(event: Event) -> None:
     if event.status != EventStatus.published:
         raise HTTPException(status_code=409, detail="Only a published event can be completed")
-    if event.starts_at.tzinfo is None or event.starts_at.utcoffset() is None:
-        raise HTTPException(status_code=409, detail="Event start time has no timezone")
-    if event.starts_at > datetime.now(timezone.utc):
-        raise HTTPException(status_code=409, detail="Event has not started yet")
+    if event.ends_at.tzinfo is None or event.ends_at.utcoffset() is None:
+        raise HTTPException(status_code=409, detail="Event end time has no timezone")
+    if event.ends_at > datetime.now(timezone.utc):
+        raise HTTPException(status_code=409, detail="Event has not ended yet")
 
 
 def _ensure_cancellable(event: Event) -> None:
@@ -112,6 +112,10 @@ async def update_event(
     changes = payload.model_dump(exclude_unset=True, exclude={"tag_ids"})
     if "starts_at" in changes and changes["starts_at"] <= datetime.now(timezone.utc):
         raise HTTPException(status_code=422, detail="Event start time must be in the future")
+    new_start = changes.get("starts_at", event.starts_at)
+    new_end = changes.get("ends_at", event.ends_at)
+    if new_end <= new_start:
+        raise HTTPException(status_code=422, detail="Event end time must be after start time")
     if "total_tickets" in changes:
         booked_tickets = await BookingRepository.get_confirmed_ticket_count(event.id, db)
         if changes["total_tickets"] < booked_tickets:

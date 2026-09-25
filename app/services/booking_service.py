@@ -35,7 +35,7 @@ async def create_booking(
             raise HTTPException(status_code=404, detail="Event not found")
         if event.status != EventStatus.published:
             raise HTTPException(status_code=409, detail="Only published events can be booked")
-        if event.starts_at <= datetime.now(timezone.UTC):
+        if event.starts_at <= datetime.now(timezone.utc):
             raise HTTPException(status_code=409, detail="Booking is closed for this event")
 
         booked_tickets = await BookingRepository.get_confirmed_ticket_count(event.id, db)
