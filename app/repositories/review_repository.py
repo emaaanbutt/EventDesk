@@ -53,7 +53,7 @@ class ReviewRepository:
 
     @staticmethod
     async def soft_delete(review: Review, db: AsyncSession) -> None:
-        deleted_at = datetime.now(timezone.UTC)
+        deleted_at = datetime.now(timezone.utc)
         review.deleted_at = deleted_at
         await db.flush()
 
