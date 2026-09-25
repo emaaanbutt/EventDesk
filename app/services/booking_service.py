@@ -4,17 +4,17 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import HTTPException
+from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.role_policy import Action
-from app.models.enums import BookingStatus, EventStatus
+from app.models.enums import BookingStatus, EventStatus, NotificationCategory
 from app.models.users import User
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.event_repository import EventRepository
-from app.repositories.notification_repository import NotificationRepository
 from app.schemas.bookings import BookingCreate, BookingFilters, BookingListResponse, BookingResponse
+from app.services import notification_service
 from app.services.authorization_service import authorize
 
 
@@ -23,7 +23,9 @@ def _require_available(actor: User) -> None:
         raise HTTPException(status_code=403, detail="User account is unavailable")
 
 
-async def create_booking(actor: User, payload: BookingCreate, db: AsyncSession) -> BookingResponse:
+async def create_booking(
+    actor: User, payload: BookingCreate, db: AsyncSession, background_tasks: BackgroundTasks
+) -> BookingResponse:
     _require_available(actor)
     authorize(actor, Action.bookings_create)
 
@@ -33,7 +35,7 @@ async def create_booking(actor: User, payload: BookingCreate, db: AsyncSession) 
             raise HTTPException(status_code=404, detail="Event not found")
         if event.status != EventStatus.published:
             raise HTTPException(status_code=409, detail="Only published events can be booked")
-        if event.starts_at <= datetime.now(timezone.utc):
+        if event.starts_at <= datetime.now(timezone.UTC):
             raise HTTPException(status_code=409, detail="Booking is closed for this event")
 
         booked_tickets = await BookingRepository.get_confirmed_ticket_count(event.id, db)
@@ -48,16 +50,29 @@ async def create_booking(actor: User, payload: BookingCreate, db: AsyncSession) 
         booking = await BookingRepository.create_booking(
             event.id, actor.id, payload.quantity, total_amount, db
         )
-        await NotificationRepository.create_booking_confirmation_notification(booking, event, db)
         response = BookingResponse.model_validate(booking)
         await db.commit()
-        return response
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Booking could not be completed") from None
+    except Exception:
+        await db.rollback()
+        raise
+    background_tasks.add_task(
+        notification_service.save_notifications_in_background,
+        user_ids=[actor.id],
+        category=NotificationCategory.booking,
+        title="Booking confirmed",
+        message=f"Your booking for {event.title} is confirmed.",
+        event_id=event.id,
+        booking_id=booking.id,
+    )
+    return response
 
 
-async def cancel_booking(actor: User, booking_id: UUID, db: AsyncSession) -> BookingResponse:
+async def cancel_booking(
+    actor: User, booking_id: UUID, db: AsyncSession, background_tasks: BackgroundTasks
+) -> BookingResponse:
     _require_available(actor)
 
     try:
@@ -76,13 +91,24 @@ async def cancel_booking(actor: User, booking_id: UUID, db: AsyncSession) -> Boo
             raise HTTPException(status_code=409, detail="Booking is already cancelled")
 
         booking = await BookingRepository.cancel_booking(booking, db)
-        await NotificationRepository.create_booking_cancellation_notification(booking, event, db)
         response = BookingResponse.model_validate(booking)
         await db.commit()
-        return response
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Booking could not be cancelled") from None
+    except Exception:
+        await db.rollback()
+        raise
+    background_tasks.add_task(
+        notification_service.save_notifications_in_background,
+        user_ids=[booking.attendee_id],
+        category=NotificationCategory.booking,
+        title="Booking cancelled",
+        message=f"Your booking for {event.title} has been cancelled.",
+        event_id=event.id,
+        booking_id=booking.id,
+    )
+    return response
 
 
 async def get_my_bookings(

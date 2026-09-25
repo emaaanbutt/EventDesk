@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
@@ -87,7 +87,8 @@ async def complete_event(
 @router.post("/{event_id}/cancel", response_model=EventResponse)
 async def cancel_event(
     event_id: UUID,
+    background_tasks: BackgroundTasks,
     actor: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> EventResponse:
-    return await event_service.cancel_event(actor, event_id, db)
+    return await event_service.cancel_event(actor, event_id, db, background_tasks)
