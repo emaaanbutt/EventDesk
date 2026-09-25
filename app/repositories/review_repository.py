@@ -8,7 +8,6 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reviews import Review
-from app.models.review_replies import ReviewReply
 
 class ReviewRepository:
     @staticmethod
@@ -70,36 +69,3 @@ class ReviewRepository:
         )
 
         return list(result.scalars().all()), count_result.scalar_one()
-
-
-    @staticmethod
-    async def get_reply_by_author(review_id: UUID, author_id: UUID, db:AsyncSession) -> ReviewReply | None:
-        result = await db.execute(
-            select(ReviewReply)
-            .where(ReviewReply.review_id == review_id, ReviewReply.author_id == author_id)
-        )
-
-        return result.scalar_one_or_none()
-
-
-    @staticmethod
-    async def create_reply(review_id: UUID, author_id: UUID, comment: str, db:AsyncSession) -> ReviewReply:
-        reply = ReviewReply(
-            author_id = author_id,
-            review_id = review_id,
-            comment = comment
-        )
-
-        db.add(reply)
-        await db.flush()
-        await db.refresh(reply, attribute_names=["created_at", "updated_at"])
-        return reply
-
-    @staticmethod
-    async def list_replies(review_id: UUID, db: AsyncSession) -> list[ReviewReply]:
-        result = await db.execute(
-            select(ReviewReply)
-            .where(ReviewReply.review_id == review_id, ReviewReply.deleted_at.is_(None))
-            .order_by(ReviewReply.created_at.asc(), ReviewReply.id.asc())
-        )
-        return list(result.scalars().all())

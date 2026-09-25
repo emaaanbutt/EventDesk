@@ -17,8 +17,6 @@ from app.repositories.review_repository import ReviewRepository
 from app.schemas.reviews import (
     ReviewCreate,
     ReviewListResponse,
-    ReviewReplyCreate,
-    ReviewReplyResponse,
     ReviewResponse,
     ReviewUpdate,
 )
@@ -81,43 +79,6 @@ async def create_review(
     return response
 
 
-async def reply_to_review(
-    actor: User,
-    review_id: UUID,
-    payload: ReviewReplyCreate,
-    db: AsyncSession,
-    background_tasks: BackgroundTasks,
-) -> ReviewReplyResponse:
-    _require_available(actor)
-    review = await _get_review_or_404(review_id, db)
-    event = await _get_event_or_404(review.event_id, db)
-    authorize(actor, Action.reviews_reply, owner_id=event.organizer_id)
-
-    if await ReviewRepository.get_reply_by_author(review.id, actor.id, db) is not None:
-        raise HTTPException(status_code=409, detail="You have already replied to this review")
-
-    try:
-        reply = await ReviewRepository.create_reply(review.id, actor.id, payload.comment, db)
-        response = ReviewReplyResponse.model_validate(reply)
-        await db.commit()
-    except IntegrityError:
-        await db.rollback()
-        raise HTTPException(status_code=409, detail="Reply could not be created") from None
-
-    if review.author_id != actor.id:
-        background_tasks.add_task(
-            notification_service.save_notifications_in_background,
-            user_ids=[review.author_id],
-            category=NotificationCategory.review,
-            title="New reply to your review",
-            message=f"Your review for {event.title} received a reply.",
-            event_id=event.id,
-            booking_id=None,
-            review_id=review.id,
-        )
-    return response
-
-
 async def update_review(
     actor: User, review_id: UUID, payload: ReviewUpdate, db: AsyncSession
 ) -> ReviewResponse:
@@ -157,9 +118,3 @@ async def list_event_reviews(
         page=page,
         page_size=page_size,
     )
-
-
-async def list_review_replies(review_id: UUID, db: AsyncSession) -> list[ReviewReplyResponse]:
-    await _get_review_or_404(review_id, db)
-    replies = await ReviewRepository.list_replies(review_id, db)
-    return [ReviewReplyResponse.model_validate(reply) for reply in replies]
