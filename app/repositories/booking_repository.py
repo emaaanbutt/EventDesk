@@ -58,9 +58,11 @@ class BookingRepository:
         return booking
 
     @staticmethod
-    async def get_by_id(booking_id: UUID, db: AsyncSession) -> Booking | None:
+    async def get_event_id(booking_id: UUID, db: AsyncSession) -> UUID | None:
         result = await db.execute(
-            select(Booking).where(Booking.id == booking_id, Booking.deleted_at.is_(None))
+            select(Booking.event_id).where(
+                Booking.id == booking_id, Booking.deleted_at.is_(None)
+            )
         )
         return result.scalar_one_or_none()
 
@@ -91,6 +93,21 @@ class BookingRepository:
         result = await db.execute(
             select(Booking)
             .where(*conditions)
+            .order_by(Booking.booked_at.desc(), Booking.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        return list(result.scalars().all()), count_result.scalar_one()
+
+    @staticmethod
+    async def list_all_bookings(
+        page: int, page_size: int, db: AsyncSession
+    ) -> tuple[list[Booking], int]:
+        condition = Booking.deleted_at.is_(None)
+        count_result = await db.execute(select(func.count(Booking.id)).where(condition))
+        result = await db.execute(
+            select(Booking)
+            .where(condition)
             .order_by(Booking.booked_at.desc(), Booking.id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
