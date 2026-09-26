@@ -13,6 +13,7 @@ from app.models.enums import BookingStatus, EventStatus, NotificationCategory
 from app.models.users import User
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.event_repository import EventRepository
+from app.realtime.publisher import publish_event_availability
 from app.schemas.bookings import BookingCreate, BookingFilters, BookingListResponse, BookingResponse
 from app.services import notification_service
 from app.services.authorization_service import authorize
@@ -58,6 +59,7 @@ async def create_booking(
     except Exception:
         await db.rollback()
         raise
+    background_tasks.add_task(publish_event_availability, event.id)
     background_tasks.add_task(
         notification_service.save_notifications_in_background,
         user_ids=[actor.id],
@@ -100,6 +102,7 @@ async def cancel_booking(
     except Exception:
         await db.rollback()
         raise
+    background_tasks.add_task(publish_event_availability, event.id)
     background_tasks.add_task(
         notification_service.save_notifications_in_background,
         user_ids=[booking.attendee_id],

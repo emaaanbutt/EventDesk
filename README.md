@@ -188,12 +188,6 @@ Apply both migrations, verify that the ORM models match PostgreSQL, then start t
 .venv/bin/uvicorn app.main:app --reload
 ```
 
-Public registration creates organizers or attendees. To create the first admin, run this command from the project root; it prompts for the admin password:
-
-```bash
-.venv/bin/python -m app.scripts.create_admin --email admin@example.com --name "Admin Name"
-```
-
 After one active admin exists, use the admin role-change endpoint to promote other users.
 
 Open the docs here:

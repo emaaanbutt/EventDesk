@@ -15,6 +15,7 @@ dependencies = [
     "PyJWT>=2.14.0",
     "sqlalchemy>=2.0.54",
     "uvicorn>=0.53.0",
+    "websockets>=17.0",
 ]
 
 [project.scripts]

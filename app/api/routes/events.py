@@ -68,10 +68,11 @@ async def get_event_availability(
 async def update_event(
     event_id: UUID,
     payload: EventUpdate,
+    background_tasks: BackgroundTasks,
     actor: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> EventResponse:
-    return await event_service.update_event(actor, event_id, payload, db)
+    return await event_service.update_event(actor, event_id, payload, db, background_tasks)
 
 
 @router.post("/{event_id}/publish", response_model=EventResponse)

@@ -14,6 +14,7 @@ from app.models.tags import Tag
 from app.models.users import User
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.event_repository import EventRepository
+from app.realtime.publisher import publish_event_availability
 from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
 from app.services import notification_service
 from app.services.authorization_service import authorize
@@ -102,7 +103,8 @@ async def create_event(actor: User, payload: EventCreate, db: AsyncSession) -> E
 
 
 async def update_event(
-    actor: User, event_id: UUID, payload: EventUpdate, db: AsyncSession
+    actor: User, event_id: UUID, payload: EventUpdate, db: AsyncSession,
+    background_tasks: BackgroundTasks,
 ) -> EventResponse:
     _require_available(actor)
     event = await _get_event_for_change_or_404(event_id, db)
@@ -134,6 +136,8 @@ async def update_event(
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Event could not be updated because related data changed") from None
+    if "total_tickets" in changes and event.status == EventStatus.published:
+        background_tasks.add_task(publish_event_availability, event.id)
     return _to_response(event)
 
 
@@ -183,6 +187,7 @@ async def cancel_event(
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Event could not be cancelled") from None
+    background_tasks.add_task(publish_event_availability, event.id)
     if attendee_ids:
         background_tasks.add_task(
             notification_service.save_notifications_in_background,
