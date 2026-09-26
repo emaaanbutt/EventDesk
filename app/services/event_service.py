@@ -171,6 +171,12 @@ async def complete_event(actor: User, event_id: UUID, db: AsyncSession) -> Event
     return _to_response(event)
 
 
+async def complete_due_events(db: AsyncSession) -> int:
+    count = await EventRepository.mark_due_events_completed(datetime.now(timezone.utc), db)
+    await db.commit()
+    return count
+
+
 async def cancel_event(
     actor: User, event_id: UUID, db: AsyncSession, background_tasks: BackgroundTasks
 ) -> EventResponse:

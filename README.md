@@ -162,10 +162,26 @@ From the project root:
 uv sync --frozen
 ```
 
-This workspace's local PostgreSQL cluster is stored in `.local-postgres/data-v2`. Start it if it is stopped:
+This workspace's local PostgreSQL cluster is stored in `.local-postgres/data-v2`. Its user systemd service starts it automatically. Check it with:
 
 ```bash
-/usr/lib/postgresql/16/bin/pg_ctl -D .local-postgres/data-v2 -l .local-postgres/server-v2.log -o '-h 127.0.0.1 -p 55432 -k /tmp' start
+systemctl --user status eventdesk-postgres.service
+```
+
+The user timer runs event completion and email reminders every five minutes while this computer is on. It is independent of the FastAPI server. After a shutdown, `Persistent=true` runs the job once when the timer starts again. Check the schedule and output with:
+
+```bash
+systemctl --user list-timers eventdesk-jobs.timer
+journalctl --user -u eventdesk-jobs.service -n 30 --no-pager
+```
+
+The units are already installed on this machine. To reinstall them after moving the project, update their absolute paths first, then run from the project root:
+
+```bash
+systemctl --user link "$PWD"/eventdesk-postgres.service "$PWD"/eventdesk-jobs.service "$PWD"/eventdesk-jobs.timer
+systemctl --user daemon-reload
+systemctl --user enable --now eventdesk-postgres.service eventdesk-jobs.timer
+loginctl enable-linger "$USER"
 ```
 
 The local [.env](.env) already has a working connection. For another machine, copy `.env.example` to `.env` and set the actual database password and a secret key of at least 32 characters.
