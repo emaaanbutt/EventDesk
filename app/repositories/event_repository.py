@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -27,6 +28,20 @@ EVENT_FIELDS = {
 
 
 class EventRepository:
+    @staticmethod
+    async def mark_due_events_completed(now: datetime, db: AsyncSession) -> int:
+        result = await db.execute(
+            update(Event)
+            .where(
+                Event.status == EventStatus.published,
+                Event.deleted_at.is_(None),
+                Event.ends_at <= now,
+            )
+            .values(status=EventStatus.completed)
+            .returning(Event.id)
+        )
+        return len(result.scalars().all())
+
     @staticmethod
     async def get_by_id(event_id: UUID, db: AsyncSession) -> Event | None:
         result = await db.execute(
