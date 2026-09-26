@@ -131,3 +131,9 @@ class EventFilters(BaseModel):
         return self
 
     model_config = ConfigDict(extra="forbid")
+
+class EventAvailabilityResponse(BaseModel):
+    event_id: UUID
+    total_tickets: int = Field(ge=0)
+    booked_tickets: int = Field(ge=0)
+    remaining_tickets: int = Field(ge=0)

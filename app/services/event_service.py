@@ -14,7 +14,7 @@ from app.models.tags import Tag
 from app.models.users import User
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.event_repository import EventRepository
-from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate
+from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
 from app.services import notification_service
 from app.services.authorization_service import authorize
 
@@ -226,3 +226,19 @@ async def get_managed_event(actor: User, event_id: UUID, db: AsyncSession) -> Ev
     event = await _get_event_or_404(event_id, db)
     authorize(actor, Action.events_edit, owner_id=event.organizer_id)
     return _to_response(event)
+
+
+async def get_event_availability(event_id: UUID, db: AsyncSession) -> EventAvailabilityResponse:
+    event = await _get_event_or_404(event_id, db)
+    if event.status != EventStatus.published:
+        raise HTTPException(status_code=404, detail="Event not found")
+    total_seats = event.total_tickets
+    booked_seats = await BookingRepository.get_confirmed_ticket_count(event_id, db)
+
+    available_seats = total_seats - booked_seats
+    return EventAvailabilityResponse(
+        event_id=event_id,
+        total_tickets=total_seats,
+        booked_tickets=booked_seats,
+        remaining_tickets=available_seats,
+    )
