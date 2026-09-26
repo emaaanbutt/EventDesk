@@ -17,7 +17,7 @@ from app.schemas.notifications import (
     NotificationReadUpdate,
     NotificationResponse,
 )
-from app.services.authorization_service import authorize
+from app.services.authorization_service import authorize_db
 
 
 def _require_available(actor: User) -> None:
@@ -49,7 +49,7 @@ async def get_my_notifications(
     actor: User, filters: NotificationFilters, db: AsyncSession
 ) -> NotificationListResponse:
     _require_available(actor)
-    authorize(actor, Action.notifications_view, owner_id=actor.id)
+    await authorize_db(actor, Action.notifications_view, db, owner_id=actor.id)
     notifications, total = await NotificationRepository.list_for_user(actor.id, filters, db)
     return NotificationListResponse(
         items=[NotificationResponse.model_validate(item) for item in notifications],
@@ -68,7 +68,7 @@ async def set_notification_read_state(
     )
     if notification is None:
         raise HTTPException(status_code=404, detail="Notification not found")
-    authorize(actor, Action.notifications_update, owner_id=notification.user_id)
+    await authorize_db(actor, Action.notifications_update, db, owner_id=notification.user_id)
 
     if notification.is_read == payload.is_read:
         response = NotificationResponse.model_validate(notification)

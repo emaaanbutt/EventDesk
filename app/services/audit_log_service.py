@@ -9,13 +9,13 @@ from app.core.role_policy import Action
 from app.models.users import User
 from app.repositories.audit_log_repository import AuditLogRepository
 from app.schemas.audit_logs import AuditLogFilters, AuditLogListResponse, AuditLogResponse
-from app.services.authorization_service import authorize
+from app.services.authorization_service import authorize_db
 
 
 async def get_audit_logs(
     actor: User, filters: AuditLogFilters, db: AsyncSession
 ) -> AuditLogListResponse:
-    authorize(actor, Action.audit_logs_view)
+    await authorize_db(actor, Action.audit_logs_view, db)
     logs, total = await AuditLogRepository.list_logs(filters.page, filters.page_size, db)
     return AuditLogListResponse(
         items=[AuditLogResponse.model_validate(log) for log in logs],
