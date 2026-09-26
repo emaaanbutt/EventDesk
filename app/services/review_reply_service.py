@@ -14,7 +14,7 @@ from app.repositories.review_repository import ReviewRepository
 from app.repositories.review_reply_repository import ReviewReplyRepository
 from app.schemas.review_replies import ReviewReplyCreate, ReviewReplyResponse
 from app.services import notification_service
-from app.services.authorization_service import authorize
+from app.services.authorization_service import authorize_db
 
 
 def _require_available(actor: User) -> None:
@@ -36,7 +36,7 @@ async def reply_to_review(
     event = await EventRepository.get_by_id(review.event_id, db)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
-    authorize(actor, Action.reviews_reply, owner_id=event.organizer_id)
+    await authorize_db(actor, Action.reviews_reply, db, owner_id=event.organizer_id)
 
     if await ReviewReplyRepository.get_by_author(review.id, actor.id, db) is not None:
         raise HTTPException(status_code=409, detail="You have already replied to this review")

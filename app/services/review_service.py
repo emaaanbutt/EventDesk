@@ -21,7 +21,7 @@ from app.schemas.reviews import (
     ReviewUpdate,
 )
 from app.services import notification_service
-from app.services.authorization_service import authorize
+from app.services.authorization_service import authorize_db
 
 
 def _require_available(actor: User) -> None:
@@ -47,7 +47,7 @@ async def create_review(
     actor: User, payload: ReviewCreate, db: AsyncSession, background_tasks: BackgroundTasks
 ) -> ReviewResponse:
     _require_available(actor)
-    authorize(actor, Action.reviews_create)
+    await authorize_db(actor, Action.reviews_create, db)
     event = await _get_event_or_404(payload.event_id, db)
 
     if not await BookingRepository.has_confirmed_booking(event.id, actor.id, db):
@@ -84,7 +84,7 @@ async def update_review(
 ) -> ReviewResponse:
     _require_available(actor)
     review = await _get_review_or_404(review_id, db)
-    authorize(actor, Action.reviews_edit, owner_id=review.author_id)
+    await authorize_db(actor, Action.reviews_edit, db, owner_id=review.author_id)
 
     try:
         review = await ReviewRepository.update_review(
@@ -101,7 +101,7 @@ async def update_review(
 async def delete_review(actor: User, review_id: UUID, db: AsyncSession) -> None:
     _require_available(actor)
     review = await _get_review_or_404(review_id, db)
-    authorize(actor, Action.reviews_delete, owner_id=review.author_id)
+    await authorize_db(actor, Action.reviews_delete, db, owner_id=review.author_id)
 
     await ReviewRepository.soft_delete(review, db)
     await db.commit()
