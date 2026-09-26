@@ -29,7 +29,7 @@ EVENT_FIELDS = {
 
 class EventRepository:
     @staticmethod
-    async def mark_due_events_completed(now: datetime, db: AsyncSession) -> int:
+    async def mark_due_events_completed(now: datetime, db: AsyncSession) -> list[UUID]:
         result = await db.execute(
             update(Event)
             .where(
@@ -40,7 +40,7 @@ class EventRepository:
             .values(status=EventStatus.completed)
             .returning(Event.id)
         )
-        return len(result.scalars().all())
+        return list(result.scalars().all())
 
     @staticmethod
     async def get_by_id(event_id: UUID, db: AsyncSession) -> Event | None:

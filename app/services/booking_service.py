@@ -16,6 +16,7 @@ from app.repositories.event_repository import EventRepository
 from app.realtime.publisher import publish_event_availability
 from app.schemas.bookings import BookingCreate, BookingFilters, BookingListResponse, BookingResponse
 from app.services import notification_service
+from app.services.audit_log_service import record_audit_log
 from app.services.authorization_service import authorize
 
 
@@ -52,6 +53,10 @@ async def create_booking(
             event.id, actor.id, payload.quantity, total_amount, db
         )
         response = BookingResponse.model_validate(booking)
+        await record_audit_log(
+            actor.id, Action.bookings_create, "booking", booking.id,
+            {"event_id": str(event.id), "quantity": booking.quantity}, db,
+        )
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -95,6 +100,10 @@ async def cancel_booking(
 
         booking = await BookingRepository.cancel_booking(booking, db)
         response = BookingResponse.model_validate(booking)
+        await record_audit_log(
+            actor.id, Action.bookings_cancel, "booking", booking.id,
+            {"event_id": str(event.id), "quantity": booking.quantity}, db,
+        )
         await db.commit()
     except IntegrityError:
         await db.rollback()
