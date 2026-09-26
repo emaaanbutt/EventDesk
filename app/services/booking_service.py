@@ -17,7 +17,7 @@ from app.realtime.publisher import publish_event_availability
 from app.schemas.bookings import BookingCreate, BookingFilters, BookingListResponse, BookingResponse
 from app.services import notification_service
 from app.services.audit_log_service import record_audit_log
-from app.services.authorization_service import authorize
+from app.services.authorization_service import authorize_db
 
 
 def _require_available(actor: User) -> None:
@@ -29,7 +29,7 @@ async def create_booking(
     actor: User, payload: BookingCreate, db: AsyncSession, background_tasks: BackgroundTasks
 ) -> BookingResponse:
     _require_available(actor)
-    authorize(actor, Action.bookings_create)
+    await authorize_db(actor, Action.bookings_create, db)
 
     try:
         event = await EventRepository.get_by_id_for_update(payload.event_id, db)
@@ -94,7 +94,7 @@ async def cancel_booking(
         booking = await BookingRepository.get_by_id_for_update(booking_id, db)
         if booking is None or booking.event_id != event.id:
             raise HTTPException(status_code=404, detail="Booking not found")
-        authorize(actor, Action.bookings_cancel, owner_id=booking.attendee_id)
+        await authorize_db(actor, Action.bookings_cancel, db, owner_id=booking.attendee_id)
         if booking.status == BookingStatus.cancelled:
             raise HTTPException(status_code=409, detail="Booking is already cancelled")
 
@@ -129,7 +129,7 @@ async def get_my_bookings(
     actor: User, filters: BookingFilters, db: AsyncSession
 ) -> BookingListResponse:
     _require_available(actor)
-    authorize(actor, Action.bookings_view, owner_id=actor.id)
+    await authorize_db(actor, Action.bookings_view, db, owner_id=actor.id)
     bookings, total = await BookingRepository.list_bookings_for_user(
         actor.id, filters.page, filters.page_size, db
     )
@@ -145,7 +145,7 @@ async def get_all_bookings(
     actor: User, filters: BookingFilters, db: AsyncSession
 ) -> BookingListResponse:
     _require_available(actor)
-    authorize(actor, Action.bookings_view)
+    await authorize_db(actor, Action.bookings_view, db)
     bookings, total = await BookingRepository.list_all_bookings(
         filters.page, filters.page_size, db
     )
