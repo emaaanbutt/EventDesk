@@ -18,6 +18,7 @@ class EventCreate(BaseModel):
     description: str = Field(min_length=1)
     venue: str = Field(min_length=1, max_length=255)
     starts_at: AwareDatetime
+    ends_at: AwareDatetime
     ticket_price: Decimal = Field(ge=0, max_digits=10, decimal_places=2, allow_inf_nan=False)
     total_tickets: int = Field(gt=0)
     category_id: UUID | None = None
@@ -35,6 +36,12 @@ class EventCreate(BaseModel):
             raise ValueError("Tag IDs must be unique")
         return value
 
+    @model_validator(mode="after")
+    def valid_time_range(self) -> "EventCreate":
+        if self.ends_at <= self.starts_at:
+            raise ValueError("End date/time must be after start date/time")
+        return self
+
     model_config = ConfigDict(extra="forbid")
 
 
@@ -43,6 +50,7 @@ class EventUpdate(BaseModel):
     description: str | None = Field(default=None, min_length=1)
     venue: str | None = Field(default=None, min_length=1, max_length=255)
     starts_at: AwareDatetime | None = None
+    ends_at: AwareDatetime | None = None
     ticket_price: Decimal | None = Field(
         default=None, ge=0, max_digits=10, decimal_places=2, allow_inf_nan=False
     )
@@ -82,6 +90,7 @@ class EventResponse(BaseModel):
     description: str
     venue: str
     starts_at: datetime
+    ends_at: datetime
     ticket_price: Decimal
     total_tickets: int
     status: EventStatus
@@ -122,3 +131,9 @@ class EventFilters(BaseModel):
         return self
 
     model_config = ConfigDict(extra="forbid")
+
+class EventAvailabilityResponse(BaseModel):
+    event_id: UUID
+    total_tickets: int = Field(ge=0)
+    booked_tickets: int = Field(ge=0)
+    remaining_tickets: int = Field(ge=0)

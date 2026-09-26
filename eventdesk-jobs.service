@@ -1,0 +1,10 @@
+[Unit]
+Description=Run due EventDesk jobs
+Requires=eventdesk-postgres.service
+After=eventdesk-postgres.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/wamolabs/Desktop/Training/EventDesk
+ExecStart=/home/wamolabs/Desktop/Training/EventDesk/.venv/bin/python -m app.jobs.run_due
+TimeoutStartSec=15min

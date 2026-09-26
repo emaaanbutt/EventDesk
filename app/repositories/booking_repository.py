@@ -6,11 +6,45 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.bookings import Booking
-from app.models.enums import BookingStatus
+from app.models.enums import BookingStatus, EventStatus
+from app.models.events import Event
+from app.models.users import User
 
 class BookingRepository:
+    @staticmethod
+    async def get_due_reminders_for_update(
+        now: datetime, cutoff: datetime, limit: int, db: AsyncSession
+    ) -> list[Booking]:
+        result = await db.execute(
+            select(Booking)
+            .join(Booking.event)
+            .join(Booking.attendee)
+            .options(selectinload(Booking.event), selectinload(Booking.attendee))
+            .where(
+                Booking.status == BookingStatus.confirmed,
+                Booking.deleted_at.is_(None),
+                Booking.reminder_sent_at.is_(None),
+                Event.status == EventStatus.published,
+                Event.deleted_at.is_(None),
+                Event.starts_at > now,
+                Event.starts_at <= cutoff,
+                User.is_active.is_(True),
+                User.deleted_at.is_(None),
+            )
+            .order_by(Event.starts_at, Booking.id)
+            .limit(limit)
+            .with_for_update(of=Booking, skip_locked=True)
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def mark_reminder_sent(booking: Booking, sent_at: datetime, db: AsyncSession) -> None:
+        booking.reminder_sent_at = sent_at
+        await db.flush()
+
     @staticmethod
     async def get_confirmed_ticket_count(event_id: UUID, db: AsyncSession) -> int:
         result = await db.execute(
@@ -49,7 +83,7 @@ class BookingRepository:
             quantity=quantity,
             total_amount=total_amount,
             status=BookingStatus.confirmed,
-            booked_at=datetime.now(timezone.UTC),
+            booked_at=datetime.now(timezone.utc),
         )
         db.add(booking)
         await db.flush()
@@ -78,7 +112,7 @@ class BookingRepository:
     @staticmethod
     async def cancel_booking(booking: Booking, db: AsyncSession) -> Booking:
         booking.status = BookingStatus.cancelled
-        booking.cancelled_at = datetime.now(timezone.UTC)
+        booking.cancelled_at = datetime.now(timezone.utc)
         await db.flush()
         await db.refresh(booking, attribute_names=["updated_at"])
         return booking

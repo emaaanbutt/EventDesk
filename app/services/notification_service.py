@@ -9,6 +9,7 @@ from app.core.role_policy import Action
 from app.db.session import AsyncSessionLocal
 from app.models.enums import NotificationCategory
 from app.models.users import User
+from app.realtime.publisher import publish_notification
 from app.repositories.notification_repository import NotificationRepository
 from app.schemas.notifications import (
     NotificationFilters,
@@ -34,10 +35,14 @@ async def save_notifications_in_background(
     review_id: UUID | None
 ) -> None:
     async with AsyncSessionLocal() as db:
-        await NotificationRepository.create_for_users(
+        notifications = await NotificationRepository.create_for_users(
             user_ids, category, title, message, event_id, booking_id, review_id, db
         )
         await db.commit()
+        for notification in notifications:
+            await publish_notification(
+                NotificationResponse.model_validate(notification), notification.user_id
+            )
 
 
 async def get_my_notifications(
@@ -70,7 +75,7 @@ async def set_notification_read_state(
         await db.commit()
         return response
 
-    read_at = datetime.now(timezone.UTC) if payload.is_read else None
+    read_at = datetime.now(timezone.utc) if payload.is_read else None
     try:
         notification = await NotificationRepository.set_read_state(
             notification, payload.is_read, read_at, db

@@ -43,7 +43,7 @@ class NotificationRepository:
         booking_id: UUID | None,
         review_id: UUID| None,
         db: AsyncSession,
-    ) -> None:
+    ) -> list[Notification]:
         notifications = [
             Notification(
                 user_id=user_id,
@@ -60,6 +60,7 @@ class NotificationRepository:
         if notifications:
             db.add_all(notifications)
             await db.flush()
+        return notifications
 
     @staticmethod
     async def get_notification_for_user_for_update(

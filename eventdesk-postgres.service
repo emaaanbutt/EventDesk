@@ -1,0 +1,14 @@
+[Unit]
+Description=EventDesk local PostgreSQL
+
+[Service]
+Type=forking
+PIDFile=/home/wamolabs/Desktop/Training/EventDesk/.local-postgres/data-v2/postmaster.pid
+ExecStart=/usr/lib/postgresql/16/bin/pg_ctl -D /home/wamolabs/Desktop/Training/EventDesk/.local-postgres/data-v2 -l /home/wamolabs/Desktop/Training/EventDesk/.local-postgres/server-v2.log -o "-h 127.0.0.1 -p 55432 -k /tmp" -w start
+ExecStop=/usr/lib/postgresql/16/bin/pg_ctl -D /home/wamolabs/Desktop/Training/EventDesk/.local-postgres/data-v2 -m fast -w stop
+Restart=on-failure
+TimeoutStartSec=120
+TimeoutStopSec=120
+
+[Install]
+WantedBy=default.target
