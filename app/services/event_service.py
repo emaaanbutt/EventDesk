@@ -17,6 +17,7 @@ from app.repositories.event_repository import EventRepository
 from app.realtime.publisher import publish_event_availability
 from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
 from app.services import notification_service
+from app.services.audit_log_service import record_audit_log
 from app.services.authorization_service import authorize
 
 
@@ -95,6 +96,7 @@ async def create_event(actor: User, payload: EventCreate, db: AsyncSession) -> E
 
     try:
         event = await EventRepository.create_event(values, actor.id, EventStatus.draft, tags, db)
+        await record_audit_log(actor.id, Action.events_create, "event", event.id, None, db)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -132,6 +134,14 @@ async def update_event(
 
     try:
         event = await EventRepository.update_event(event, changes, tags, db)
+        changed_fields = list(changes)
+        if tags is not None:
+            changed_fields.append("tag_ids")
+        if changed_fields:
+            await record_audit_log(
+                actor.id, Action.events_edit, "event", event.id,
+                {"fields": sorted(changed_fields)}, db,
+            )
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -149,6 +159,7 @@ async def publish_event(actor: User, event_id: UUID, db: AsyncSession) -> EventR
 
     try:
         await EventRepository.set_status(event, EventStatus.published, db)
+        await record_audit_log(actor.id, Action.events_publish, "event", event.id, None, db)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -164,6 +175,7 @@ async def complete_event(actor: User, event_id: UUID, db: AsyncSession) -> Event
 
     try:
         await EventRepository.set_status(event, EventStatus.completed, db)
+        await record_audit_log(actor.id, Action.events_complete, "event", event.id, None, db)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -172,9 +184,13 @@ async def complete_event(actor: User, event_id: UUID, db: AsyncSession) -> Event
 
 
 async def complete_due_events(db: AsyncSession) -> int:
-    count = await EventRepository.mark_due_events_completed(datetime.now(timezone.utc), db)
+    event_ids = await EventRepository.mark_due_events_completed(datetime.now(timezone.utc), db)
+    for event_id in event_ids:
+        await record_audit_log(
+            None, Action.events_complete, "event", event_id, {"source": "scheduler"}, db
+        )
     await db.commit()
-    return count
+    return len(event_ids)
 
 
 async def cancel_event(
@@ -188,6 +204,7 @@ async def cancel_event(
     try:
         attendee_ids = await BookingRepository.get_confirmed_attendee_ids(event.id, db)
         await EventRepository.set_status(event, EventStatus.cancelled, db)
+        await record_audit_log(actor.id, Action.events_cancel, "event", event.id, None, db)
         response = _to_response(event)
         await db.commit()
     except IntegrityError:
