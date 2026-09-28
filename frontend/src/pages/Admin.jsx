@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, query } from "../lib/api";
 import {
   Alert,
@@ -24,6 +25,7 @@ export function AdminPage() {
       <div className="tabs" role="tablist" aria-label="Admin sections">
         {[
           ["users", "Users"],
+          ["events", "Events"],
           ["catalog", "Categories & tags"],
           ["audit", "Audit logs"],
         ].map(([key, title]) => (
@@ -39,8 +41,72 @@ export function AdminPage() {
         ))}
       </div>
       {tab === "users" && <UsersAdmin />}
+      {tab === "events" && <EventsAdmin />}
       {tab === "catalog" && <CatalogAdmin />}
       {tab === "audit" && <AuditAdmin />}
+    </>
+  );
+}
+
+function EventsAdmin() {
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    setResult(null);
+    setError("");
+    api(query("/events/admin", { search: search.trim() || undefined, status: status || undefined, page, page_size: 10 }))
+      .then((data) => { if (active) setResult(data); })
+      .catch((err) => { if (active) setError(err.message); });
+    return () => { active = false; };
+  }, [search, status, page]);
+
+  return (
+    <>
+      <div className="filters slim card">
+        <input
+          aria-label="Search events"
+          placeholder="Search events by title"
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+        />
+        <select
+          aria-label="Event status"
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+        >
+          <option value="">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <Alert message={error} />
+      {!result && !error ? <Busy /> : result?.items.length ? (
+        <>
+          <div className="card table-wrap">
+            <table>
+              <thead><tr><th>Event</th><th>Starts</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                {result.items.map((event) => (
+                  <tr key={event.id}>
+                    <td><strong>{event.title}</strong></td>
+                    <td>{formatDate(event.starts_at)}</td>
+                    <td><Status value={event.status} /></td>
+                    <td><Link className="text-link" to={`/events/${event.id}`}>Open</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination {...result} onPage={setPage} />
+        </>
+      ) : <Empty title="No events found" detail="Try another title or status." />}
     </>
   );
 }
@@ -240,8 +306,10 @@ const auditActions = {
   "events.publish": "Published an event",
   "events.complete": "Completed an event",
   "events.cancel": "Cancelled an event",
+  "events.delete": "Deleted an event",
   "bookings.create": "Booked tickets",
   "bookings.cancel": "Cancelled a booking",
+  "bookings.delete": "Deleted a booking",
 };
 
 const auditFields = {

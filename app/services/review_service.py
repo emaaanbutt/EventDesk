@@ -95,7 +95,7 @@ async def update_review(
         review = await ReviewRepository.update_review(
             review, payload.model_dump(exclude_unset=True), db
         )
-        response = ReviewResponse.model_validate(review).model_copy(update={"author_name": actor.name})
+        response = ReviewResponse.model_validate(review).model_copy(update={"author_name": review.author.name})
         await db.commit()
     except IntegrityError:
         await db.rollback()

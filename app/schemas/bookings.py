@@ -19,6 +19,7 @@ class BookingResponse(BaseModel):
     event_id: UUID
     event_title: str | None = None
     event_status: EventStatus | None = None
+    event_deleted: bool = False
     attendee_id: UUID
     attendee_name: str | None = None
     quantity: int

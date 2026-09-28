@@ -447,6 +447,7 @@ export function EventFormPage() {
 export function EventDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [availability, setAvailability] = useState(null);
   const [error, setError] = useState("");
@@ -455,12 +456,22 @@ export function EventDetailPage() {
   const [notice, setNotice] = useState("");
   useEffect(() => {
     let active = true;
+    setError("");
     api(`/events/${id}`, { auth: false })
-      .catch((err) =>
-        user && err.status === 404
-          ? api(`/events/${id}/manage`)
-          : Promise.reject(err),
-      )
+      .catch(async (err) => {
+        if (!user || err.status !== 404) throw err;
+        try {
+          return await api(`/events/${id}/attended`);
+        } catch (attendedError) {
+          if (
+            ["organizer", "admin"].includes(user.role) &&
+            [403, 404].includes(attendedError.status)
+          ) {
+            return api(`/events/${id}/manage`);
+          }
+          throw attendedError;
+        }
+      })
       .then((data) => {
         if (active) setEvent(data);
       })
@@ -472,7 +483,7 @@ export function EventDetailPage() {
     };
   }, [id, user?.id]);
   useEffect(() => {
-    if (!event || !["published", "completed"].includes(event.status)) return;
+    if (!event || !["published", "completed", "cancelled"].includes(event.status)) return;
     let active = true;
     if (event.status === "published") {
       api(`/events/${id}/availability`, { auth: false })
@@ -511,6 +522,17 @@ export function EventDetailPage() {
     } catch (err) {
       setError(err.message);
     } finally {
+      setBusy(false);
+    }
+  }
+  async function deleteEvent() {
+    setBusy(true);
+    setError("");
+    try {
+      await api(`/events/${id}`, { method: "DELETE" });
+      navigate(user?.role === "admin" ? "/admin" : "/my-events");
+    } catch (err) {
+      setError(err.message);
       setBusy(false);
     }
   }
@@ -570,9 +592,11 @@ export function EventDetailPage() {
         </div>
         {canManage && (
           <div className="heading-actions">
-            <Link className="button secondary" to={`/my-events/${id}/edit`}>
-              Edit event
-            </Link>
+            {["draft", "published"].includes(event.status) && (
+              <Link className="button secondary" to={`/my-events/${id}/edit`}>
+                Edit event
+              </Link>
+            )}
             {event.status === "draft" && (
               <button
                 className="button primary"
@@ -601,6 +625,14 @@ export function EventDetailPage() {
                   Mark completed
                 </button>
               )}
+            <ConfirmButton
+              className="button subtle danger-text"
+              disabled={busy}
+              message="Delete this event? It will be hidden, and active bookings will be cancelled."
+              onConfirm={deleteEvent}
+            >
+              Delete event
+            </ConfirmButton>
           </div>
         )}
       </div>
