@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.audit_logs import router as audit_logs_router
 from app.api.routes.auth import router as auth_router
@@ -15,30 +16,20 @@ from app.api.routes.review_replies import router as review_replies_router
 from app.api.routes.reviews import router as reviews_router
 from app.api.routes.tags import router as tags_router
 from app.api.routes.users import router as users_router
-from app.core.config import settings
 
 app = FastAPI(title="EventDesk", version="1.0.0")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "PATCH", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
-)
-app.include_router(audit_logs_router)
-app.include_router(auth_router)
-app.include_router(bookings_router)
-app.include_router(categories_router)
-app.include_router(events_router)
-app.include_router(health_router)
-app.include_router(notifications_router)
+app.include_router(audit_logs_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
+app.include_router(bookings_router, prefix="/api")
+app.include_router(categories_router, prefix="/api")
+app.include_router(events_router, prefix="/api")
+app.include_router(health_router, prefix="/api")
+app.include_router(notifications_router, prefix="/api")
 app.include_router(realtime_router)
-app.include_router(review_replies_router)
-app.include_router(reviews_router)
-app.include_router(tags_router)
-app.include_router(users_router)
+app.include_router(review_replies_router, prefix="/api")
+app.include_router(reviews_router, prefix="/api")
+app.include_router(tags_router, prefix="/api")
+app.include_router(users_router, prefix="/api")
 
-
-@app.get("/")
-async def root() -> dict[str, str]:
-    return {"message": "EventDesk API is running"}
+frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+app.frontend("/", directory=frontend_dist, fallback="index.html")
