@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
 from app.models.users import User
-from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate
+from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
 from app.services import event_service
 
 router = APIRouter(prefix="/events", tags=["events"])
@@ -56,14 +56,23 @@ async def get_managed_event(
     return await event_service.get_managed_event(actor, event_id, db)
 
 
+@router.get("/{event_id}/availability", response_model=EventAvailabilityResponse)
+async def get_event_availability(
+    event_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> EventAvailabilityResponse:
+    return await event_service.get_event_availability(event_id, db)
+
+
 @router.patch("/{event_id}", response_model=EventResponse)
 async def update_event(
     event_id: UUID,
     payload: EventUpdate,
+    background_tasks: BackgroundTasks,
     actor: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> EventResponse:
-    return await event_service.update_event(actor, event_id, payload, db)
+    return await event_service.update_event(actor, event_id, payload, db, background_tasks)
 
 
 @router.post("/{event_id}/publish", response_model=EventResponse)

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run EventDesk jobs every five minutes
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+Unit=eventdesk-jobs.service
+
+[Install]
+WantedBy=timers.target

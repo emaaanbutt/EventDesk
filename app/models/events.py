@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, Text, UUID, VARCHAR
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Integer, Numeric, Text, UUID, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimeStamp
@@ -32,10 +32,15 @@ class Event(Base, TimeStamp):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     venue: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     ticket_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     total_tickets: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[EventStatus] = mapped_column(Enum(EventStatus, name="event_status"), nullable=False)
     organizer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("ends_at > starts_at", name="ck_events_end_after_start"),
+    )
 
     category: Mapped[Category] = relationship(back_populates="events")
     organizer: Mapped[User] = relationship(back_populates="events")

@@ -14,7 +14,8 @@ from app.models.tags import Tag
 from app.models.users import User
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.event_repository import EventRepository
-from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate
+from app.realtime.publisher import publish_event_availability
+from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
 from app.services import notification_service
 from app.services.authorization_service import authorize
 
@@ -67,10 +68,10 @@ def _ensure_publishable(event: Event) -> None:
 def _ensure_completable(event: Event) -> None:
     if event.status != EventStatus.published:
         raise HTTPException(status_code=409, detail="Only a published event can be completed")
-    if event.starts_at.tzinfo is None or event.starts_at.utcoffset() is None:
-        raise HTTPException(status_code=409, detail="Event start time has no timezone")
-    if event.starts_at > datetime.now(timezone.utc):
-        raise HTTPException(status_code=409, detail="Event has not started yet")
+    if event.ends_at.tzinfo is None or event.ends_at.utcoffset() is None:
+        raise HTTPException(status_code=409, detail="Event end time has no timezone")
+    if event.ends_at > datetime.now(timezone.utc):
+        raise HTTPException(status_code=409, detail="Event has not ended yet")
 
 
 def _ensure_cancellable(event: Event) -> None:
@@ -102,7 +103,8 @@ async def create_event(actor: User, payload: EventCreate, db: AsyncSession) -> E
 
 
 async def update_event(
-    actor: User, event_id: UUID, payload: EventUpdate, db: AsyncSession
+    actor: User, event_id: UUID, payload: EventUpdate, db: AsyncSession,
+    background_tasks: BackgroundTasks,
 ) -> EventResponse:
     _require_available(actor)
     event = await _get_event_for_change_or_404(event_id, db)
@@ -112,6 +114,10 @@ async def update_event(
     changes = payload.model_dump(exclude_unset=True, exclude={"tag_ids"})
     if "starts_at" in changes and changes["starts_at"] <= datetime.now(timezone.utc):
         raise HTTPException(status_code=422, detail="Event start time must be in the future")
+    new_start = changes.get("starts_at", event.starts_at)
+    new_end = changes.get("ends_at", event.ends_at)
+    if new_end <= new_start:
+        raise HTTPException(status_code=422, detail="Event end time must be after start time")
     if "total_tickets" in changes:
         booked_tickets = await BookingRepository.get_confirmed_ticket_count(event.id, db)
         if changes["total_tickets"] < booked_tickets:
@@ -130,6 +136,8 @@ async def update_event(
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Event could not be updated because related data changed") from None
+    if "total_tickets" in changes and event.status == EventStatus.published:
+        background_tasks.add_task(publish_event_availability, event.id)
     return _to_response(event)
 
 
@@ -163,6 +171,12 @@ async def complete_event(actor: User, event_id: UUID, db: AsyncSession) -> Event
     return _to_response(event)
 
 
+async def complete_due_events(db: AsyncSession) -> int:
+    count = await EventRepository.mark_due_events_completed(datetime.now(timezone.utc), db)
+    await db.commit()
+    return count
+
+
 async def cancel_event(
     actor: User, event_id: UUID, db: AsyncSession, background_tasks: BackgroundTasks
 ) -> EventResponse:
@@ -179,6 +193,7 @@ async def cancel_event(
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Event could not be cancelled") from None
+    background_tasks.add_task(publish_event_availability, event.id)
     if attendee_ids:
         background_tasks.add_task(
             notification_service.save_notifications_in_background,
@@ -222,3 +237,19 @@ async def get_managed_event(actor: User, event_id: UUID, db: AsyncSession) -> Ev
     event = await _get_event_or_404(event_id, db)
     authorize(actor, Action.events_edit, owner_id=event.organizer_id)
     return _to_response(event)
+
+
+async def get_event_availability(event_id: UUID, db: AsyncSession) -> EventAvailabilityResponse:
+    event = await _get_event_or_404(event_id, db)
+    if event.status != EventStatus.published:
+        raise HTTPException(status_code=404, detail="Event not found")
+    total_seats = event.total_tickets
+    booked_seats = await BookingRepository.get_confirmed_ticket_count(event_id, db)
+
+    available_seats = total_seats - booked_seats
+    return EventAvailabilityResponse(
+        event_id=event_id,
+        total_tickets=total_seats,
+        booked_tickets=booked_seats,
+        remaining_tickets=available_seats,
+    )
