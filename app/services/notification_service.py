@@ -74,7 +74,6 @@ async def set_notification_read_state(
 
     if notification.is_read == payload.is_read:
         response = NotificationResponse.model_validate(notification)
-        await db.commit()
         return response
 
     read_at = datetime.now(timezone.UTC) if payload.is_read else None
