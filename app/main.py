@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.audit_logs import router as audit_logs_router
 from app.api.routes.auth import router as auth_router
@@ -14,8 +15,16 @@ from app.api.routes.review_replies import router as review_replies_router
 from app.api.routes.reviews import router as reviews_router
 from app.api.routes.tags import router as tags_router
 from app.api.routes.users import router as users_router
+from app.core.config import settings
 
 app = FastAPI(title="EventDesk", version="1.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 app.include_router(audit_logs_router)
 app.include_router(auth_router)
 app.include_router(bookings_router)
