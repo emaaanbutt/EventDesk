@@ -15,6 +15,7 @@ class ReviewRepository:
     async def get_by_id(review_id: UUID, db: AsyncSession) -> Review | None:
         result = await db.execute(
             select(Review)
+            .options(selectinload(Review.author))
             .where(Review.id == review_id, Review.deleted_at.is_(None))
         )
         return result.scalar_one_or_none()

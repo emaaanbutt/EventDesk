@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -12,7 +12,7 @@ from app.models.categories import Category
 from app.models.enums import EventStatus
 from app.models.events import Event
 from app.models.tags import Tag
-from app.schemas.events import EventFilters
+from app.schemas.events import AdminEventFilters, EventFilters
 
 
 EVENT_FIELDS = {
@@ -52,11 +52,16 @@ class EventRepository:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_by_id_for_update(event_id: UUID, db: AsyncSession) -> Event | None:
+    async def get_by_id_for_update(
+        event_id: UUID, db: AsyncSession, include_deleted: bool = False
+    ) -> Event | None:
+        conditions = [Event.id == event_id]
+        if not include_deleted:
+            conditions.append(Event.deleted_at.is_(None))
         result = await db.execute(
             select(Event)
             .options(selectinload(Event.category), selectinload(Event.tags))
-            .where(Event.id == event_id, Event.deleted_at.is_(None))
+            .where(*conditions)
             .with_for_update()
         )
         return result.scalar_one_or_none()
@@ -102,6 +107,13 @@ class EventRepository:
         return event
 
     @staticmethod
+    async def soft_delete(event: Event, db: AsyncSession) -> None:
+        if event.status == EventStatus.published:
+            event.status = EventStatus.cancelled
+        event.deleted_at = datetime.now(timezone.utc)
+        await db.flush()
+
+    @staticmethod
     async def list_published(filters: EventFilters, db: AsyncSession) -> tuple[list[Event], int]:
         conditions = [Event.status == EventStatus.published, Event.deleted_at.is_(None)]
         if filters.search is not None:
@@ -145,6 +157,24 @@ class EventRepository:
             .order_by(Event.created_at.desc(), Event.id.asc())
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    async def list_all(filters: AdminEventFilters, db: AsyncSession) -> tuple[list[Event], int]:
+        conditions = [Event.deleted_at.is_(None)]
+        if filters.status is not None:
+            conditions.append(Event.status == filters.status)
+        if filters.search is not None:
+            conditions.append(Event.title.ilike(f"%{filters.search}%"))
+        total = await db.scalar(select(func.count(Event.id)).where(*conditions))
+        result = await db.execute(
+            select(Event)
+            .options(selectinload(Event.category), selectinload(Event.tags))
+            .where(*conditions)
+            .order_by(Event.created_at.desc(), Event.id.desc())
+            .offset((filters.page - 1) * filters.page_size)
+            .limit(filters.page_size)
+        )
+        return list(result.scalars().all()), total
 
     @staticmethod
     async def get_tags_by_ids(tag_ids: list[UUID], db: AsyncSession) -> list[Tag]:

@@ -127,6 +127,50 @@ async def cancel_booking(
     return response
 
 
+async def delete_booking(
+    actor: User, booking_id: UUID, db: AsyncSession, background_tasks: BackgroundTasks
+) -> None:
+    _require_available(actor)
+    try:
+        event_id = await BookingRepository.get_event_id(booking_id, db)
+        if event_id is None:
+            raise HTTPException(status_code=404, detail="Booking not found")
+        event = await EventRepository.get_by_id_for_update(event_id, db, include_deleted=True)
+        if event is None:
+            raise HTTPException(status_code=404, detail="Event not found")
+        booking = await BookingRepository.get_by_id_for_update(booking_id, db)
+        if booking is None or booking.event_id != event.id:
+            raise HTTPException(status_code=404, detail="Booking not found")
+        await authorize_db(actor, Action.bookings_delete, db, owner_id=booking.attendee_id)
+        was_confirmed = booking.status == BookingStatus.confirmed
+        if was_confirmed:
+            await BookingRepository.cancel_booking(booking, db)
+        await BookingRepository.soft_delete(booking, db)
+        await record_audit_log(
+            actor.id, Action.bookings_delete, "booking", booking.id,
+            {"event_id": str(event.id), "quantity": booking.quantity}, db,
+        )
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Booking could not be deleted") from None
+    except Exception:
+        await db.rollback()
+        raise
+    if was_confirmed:
+        background_tasks.add_task(publish_event_availability, event.id)
+        background_tasks.add_task(
+            notification_service.save_notifications_in_background,
+            user_ids=[booking.attendee_id],
+            category=NotificationCategory.booking,
+            title="Booking cancelled",
+            message=f"Your booking for {event.title} was cancelled.",
+            event_id=event.id,
+            booking_id=booking.id,
+            review_id=None,
+        )
+
+
 async def get_my_bookings(
     actor: User, filters: BookingFilters, db: AsyncSession
 ) -> BookingListResponse:
@@ -138,7 +182,11 @@ async def get_my_bookings(
     return BookingListResponse(
         items=[
             BookingResponse.model_validate(booking).model_copy(
-                update={"event_title": booking.event.title, "event_status": booking.event.status}
+                update={
+                    "event_title": booking.event.title,
+                    "event_status": booking.event.status,
+                    "event_deleted": booking.event.deleted_at is not None,
+                }
             )
             for booking in bookings
         ],
@@ -162,6 +210,7 @@ async def get_all_bookings(
                 update={
                     "event_title": booking.event.title,
                     "event_status": booking.event.status,
+                    "event_deleted": booking.event.deleted_at is not None,
                     "attendee_name": booking.attendee.name,
                 }
             )

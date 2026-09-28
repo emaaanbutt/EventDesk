@@ -22,7 +22,9 @@ async def watch_event(socket: WebSocket, event_id: UUID) -> None:
             try:
                 async with AsyncSessionLocal() as db:
                     event = await EventRepository.get_by_id(event_id, db)
-                    if event is None or event.status not in (EventStatus.published, EventStatus.completed):
+                    if event is None or event.status not in (
+                        EventStatus.published, EventStatus.completed, EventStatus.cancelled
+                    ):
                         await socket.close(code=1008)
                         return
                     availability = (

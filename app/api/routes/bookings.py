@@ -49,3 +49,13 @@ async def cancel_booking(
     db: AsyncSession = Depends(get_db),
 ) -> BookingResponse:
     return await booking_service.cancel_booking(actor, booking_id, db, background_tasks)
+
+
+@router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_booking(
+    booking_id: UUID,
+    background_tasks: BackgroundTasks,
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await booking_service.delete_booking(actor, booking_id, db, background_tasks)

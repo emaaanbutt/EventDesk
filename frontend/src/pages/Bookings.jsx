@@ -48,6 +48,17 @@ export function BookingsPage() {
       setError(err.message);
     }
   }
+  async function remove(id) {
+    setError("");
+    setNotice("");
+    try {
+      await api(`/bookings/${id}`, { method: "DELETE" });
+      setNotice("Booking removed from your list.");
+      setVersion((value) => value + 1);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
   return (
     <>
       <PageHeading
@@ -93,7 +104,7 @@ export function BookingsPage() {
                 {result.items.map((booking) => (
                   <tr key={booking.id}>
                     <td>
-                      {booking.event_status === "published" ? (
+                      {!booking.event_deleted ? (
                         <Link
                           to={`/events/${booking.event_id}`}
                           className="text-link"
@@ -110,7 +121,7 @@ export function BookingsPage() {
                     <td>{booking.quantity}</td>
                     <td>{formatMoney(booking.total_amount)}</td>
                     <td>{formatDate(booking.booked_at)}</td>
-                    <td>
+                    <td className="row-actions">
                       <Status value={booking.status} />
                     </td>
                     <td>
@@ -123,6 +134,17 @@ export function BookingsPage() {
                           Cancel
                         </ConfirmButton>
                       )}
+                      <ConfirmButton
+                        className="button subtle small danger-text"
+                        message={
+                          booking.status === "confirmed"
+                            ? "Delete this booking? Its tickets will be released."
+                            : "Remove this booking from your list?"
+                        }
+                        onConfirm={() => remove(booking.id)}
+                      >
+                        Delete
+                      </ConfirmButton>
                     </td>
                   </tr>
                 ))}
