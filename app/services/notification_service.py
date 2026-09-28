@@ -44,10 +44,6 @@ async def save_notifications_in_background(
                 user_ids, category, title, message, event_id, booking_id, review_id, db
             )
             await db.commit()
-            for notification in notifications:
-            await publish_notification(
-                NotificationResponse.model_validate(notification), notification.user_id
-            )
     except Exception:
         logger.exception("Failed to save background notifications")
 
