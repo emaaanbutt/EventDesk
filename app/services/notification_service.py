@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -19,6 +20,9 @@ from app.schemas.notifications import (
 from app.services.authorization_service import authorize
 
 
+logger = logging.getLogger(__name__)
+
+
 def _require_available(actor: User) -> None:
     if not actor.is_active or actor.deleted_at is not None:
         raise HTTPException(status_code=403, detail="User account is unavailable")
@@ -33,11 +37,14 @@ async def save_notifications_in_background(
     booking_id: UUID | None,
     review_id: UUID | None
 ) -> None:
-    async with AsyncSessionLocal() as db:
-        await NotificationRepository.create_for_users(
-            user_ids, category, title, message, event_id, booking_id, review_id, db
-        )
-        await db.commit()
+    try:
+        async with AsyncSessionLocal() as db:
+            await NotificationRepository.create_for_users(
+                user_ids, category, title, message, event_id, booking_id, review_id, db
+            )
+            await db.commit()
+    except Exception:
+        logger.exception("Failed to save background notifications")
 
 
 async def get_my_notifications(
