@@ -1,6 +1,6 @@
 # EventDesk
 
-EventDesk is a FastAPI backend for an event management platform. Auth, user management, roles, and event management are available.
+EventDesk is a FastAPI backend with a React frontend for an event management platform. Frontend setup and page details are in [frontend/README.md](frontend/README.md).
 
 This is a layered app:
 - Routes accept HTTP requests
@@ -26,7 +26,7 @@ The current version includes:
 - Event creation, editing, publishing, completion, cancellation, and public browsing
 - Categories, tags, and cancellation notifications
 
-Booking and review API flows are future work; their database tables are already included in the migrations.
+Booking, review, notification, and audit log API flows are also available.
 
 ---
 
@@ -241,11 +241,6 @@ The following is done and working in the project structure:
 
 ---
 
-## Still in progress / next layer
+## Frontend
 
-The event platform is not fully finished yet. The next likely work items are:
-- booking flow
-- review system
-- additional notification flows beyond event cancellation
-
-Auth, users, and events are ready to run locally. Booking and review endpoints can be built on the migrated tables next.
+Run the React app from `frontend/` after starting FastAPI. See [frontend/README.md](frontend/README.md) for commands and the screen-to-API flow.

@@ -35,6 +35,8 @@ async def create_booking(
         event = await EventRepository.get_by_id_for_update(payload.event_id, db)
         if event is None:
             raise HTTPException(status_code=404, detail="Event not found")
+        if event.organizer_id == actor.id:
+            raise HTTPException(status_code=403, detail="You cannot book your own event")
         if event.status != EventStatus.published:
             raise HTTPException(status_code=409, detail="Only published events can be booked")
         if event.starts_at <= datetime.now(timezone.utc):
@@ -134,7 +136,12 @@ async def get_my_bookings(
         actor.id, filters.page, filters.page_size, db
     )
     return BookingListResponse(
-        items=[BookingResponse.model_validate(booking) for booking in bookings],
+        items=[
+            BookingResponse.model_validate(booking).model_copy(
+                update={"event_title": booking.event.title, "event_status": booking.event.status}
+            )
+            for booking in bookings
+        ],
         total=total,
         page=filters.page,
         page_size=filters.page_size,
@@ -150,7 +157,16 @@ async def get_all_bookings(
         filters.page, filters.page_size, db
     )
     return BookingListResponse(
-        items=[BookingResponse.model_validate(booking) for booking in bookings],
+        items=[
+            BookingResponse.model_validate(booking).model_copy(
+                update={
+                    "event_title": booking.event.title,
+                    "event_status": booking.event.status,
+                    "attendee_name": booking.attendee.name,
+                }
+            )
+            for booking in bookings
+        ],
         total=total,
         page=filters.page,
         page_size=filters.page_size,

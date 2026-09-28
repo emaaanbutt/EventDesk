@@ -46,6 +46,7 @@ class ReviewResponse(BaseModel):
     id: UUID
     event_id: UUID
     author_id: UUID
+    author_name: str | None = None
     rating: int
     comment: str
     created_at: datetime

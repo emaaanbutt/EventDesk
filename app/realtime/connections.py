@@ -8,8 +8,10 @@ from fastapi import HTTPException, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 from app.db.session import AsyncSessionLocal
+from app.models.enums import EventStatus
 from app.realtime.auth import authenticate_notification_socket
 from app.realtime.manager import manager
+from app.repositories.event_repository import EventRepository
 from app.services.event_service import get_event_availability
 
 
@@ -19,14 +21,22 @@ async def watch_event(socket: WebSocket, event_id: UUID) -> None:
         async with room.lock:
             try:
                 async with AsyncSessionLocal() as db:
-                    availability = await get_event_availability(event_id, db)
+                    event = await EventRepository.get_by_id(event_id, db)
+                    if event is None or event.status not in (EventStatus.published, EventStatus.completed):
+                        await socket.close(code=1008)
+                        return
+                    availability = (
+                        await get_event_availability(event_id, db)
+                        if event.status == EventStatus.published else None
+                    )
             except HTTPException:
                 await socket.close(code=1008)
                 return
             await socket.accept()
-            await socket.send_json(
-                {"type": "event.availability", "data": availability.model_dump(mode="json")}
-            )
+            if availability is not None:
+                await socket.send_json(
+                    {"type": "event.availability", "data": availability.model_dump(mode="json")}
+                )
             room.connections.add(socket)
         while True:
             await socket.receive_text()

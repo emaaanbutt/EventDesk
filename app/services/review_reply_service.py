@@ -12,6 +12,7 @@ from app.models.users import User
 from app.repositories.event_repository import EventRepository
 from app.repositories.review_repository import ReviewRepository
 from app.repositories.review_reply_repository import ReviewReplyRepository
+from app.realtime.publisher import publish_review_reply
 from app.schemas.review_replies import ReviewReplyCreate, ReviewReplyResponse
 from app.services import notification_service
 from app.services.authorization_service import authorize_db
@@ -43,12 +44,13 @@ async def reply_to_review(
 
     try:
         reply = await ReviewReplyRepository.create(review.id, actor.id, payload.comment, db)
-        response = ReviewReplyResponse.model_validate(reply)
+        response = ReviewReplyResponse.model_validate(reply).model_copy(update={"author_name": actor.name})
         await db.commit()
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Reply could not be created") from None
 
+    background_tasks.add_task(publish_review_reply, event.id, review.id)
     if review.author_id != actor.id:
         background_tasks.add_task(
             notification_service.save_notifications_in_background,
@@ -68,4 +70,7 @@ async def list_review_replies(review_id: UUID, db: AsyncSession) -> list[ReviewR
     if review is None:
         raise HTTPException(status_code=404, detail="Review not found")
     replies = await ReviewReplyRepository.list_for_review(review_id, db)
-    return [ReviewReplyResponse.model_validate(reply) for reply in replies]
+    return [
+        ReviewReplyResponse.model_validate(reply).model_copy(update={"author_name": reply.author.name})
+        for reply in replies
+    ]

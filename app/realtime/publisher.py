@@ -45,3 +45,13 @@ async def publish_notification(notification: NotificationResponse, user_id: UUID
         await room.broadcast(
             {"type": "notification.created", "data": notification.model_dump(mode="json")}
         )
+
+
+async def publish_review_reply(event_id: UUID, review_id: UUID) -> None:
+    room = manager.find_event_room(event_id)
+    if room is None:
+        return
+    async with room.lock:
+        await room.broadcast(
+            {"type": "review.reply.created", "data": {"review_id": str(review_id)}}
+        )

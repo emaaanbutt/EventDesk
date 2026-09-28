@@ -125,12 +125,29 @@ class BookingRepository:
         count_result = await db.execute(select(func.count(Booking.id)).where(*conditions))
         result = await db.execute(
             select(Booking)
+            .options(selectinload(Booking.event))
             .where(*conditions)
             .order_by(Booking.booked_at.desc(), Booking.id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
         return list(result.scalars().all()), count_result.scalar_one()
+
+    @staticmethod
+    async def list_all_bookings(
+        page: int, page_size: int, db: AsyncSession
+    ) -> tuple[list[Booking], int]:
+        conditions = (Booking.deleted_at.is_(None),)
+        total = await db.scalar(select(func.count(Booking.id)).where(*conditions))
+        result = await db.execute(
+            select(Booking)
+            .options(selectinload(Booking.event), selectinload(Booking.attendee))
+            .where(*conditions)
+            .order_by(Booking.booked_at.desc(), Booking.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        return list(result.scalars().all()), total
 
     @staticmethod
     async def has_confirmed_booking(event_id: UUID, user_id: UUID, db: AsyncSession) -> bool:

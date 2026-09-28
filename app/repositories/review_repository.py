@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.reviews import Review
 
@@ -66,6 +67,7 @@ class ReviewRepository:
         count_result = await db.execute(select(func.count(Review.id)).where(*conditions))
         result = await db.execute(
             select(Review)
+            .options(selectinload(Review.author))
             .where(*conditions)
             .order_by(Review.created_at.desc(), Review.id.desc())
             .offset((page - 1) * page_size)

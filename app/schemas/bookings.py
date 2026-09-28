@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import BookingStatus
+from app.models.enums import BookingStatus, EventStatus
 
 
 class BookingCreate(BaseModel):
@@ -17,7 +17,10 @@ class BookingCreate(BaseModel):
 class BookingResponse(BaseModel):
     id: UUID
     event_id: UUID
+    event_title: str | None = None
+    event_status: EventStatus | None = None
     attendee_id: UUID
+    attendee_name: str | None = None
     quantity: int
     total_amount: Decimal
     status: BookingStatus

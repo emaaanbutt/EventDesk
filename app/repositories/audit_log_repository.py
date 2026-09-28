@@ -8,9 +8,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.audit_logs import AuditLog
+from app.models.events import Event
+from app.models.users import User
 
 
 class AuditLogRepository:
+    @staticmethod
+    async def entity_names(logs: list[AuditLog], db: AsyncSession) -> dict[UUID, str]:
+        user_ids = {log.entity_id for log in logs if log.entity_type == "user" and log.entity_id}
+        event_ids = {log.entity_id for log in logs if log.entity_type == "event" and log.entity_id}
+        event_ids.update(
+            UUID(log.details["event_id"])
+            for log in logs
+            if log.entity_type == "booking" and log.details and log.details.get("event_id")
+        )
+        names: dict[UUID, str] = {}
+        if user_ids:
+            rows = await db.execute(select(User.id, User.name).where(User.id.in_(user_ids)))
+            names.update(rows.all())
+        if event_ids:
+            rows = await db.execute(select(Event.id, Event.title).where(Event.id.in_(event_ids)))
+            names.update(rows.all())
+        return names
+
     @staticmethod
     async def list_logs(
         page: int, page_size: int, db: AsyncSession

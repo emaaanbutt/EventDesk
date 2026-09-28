@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.review_replies import ReviewReply
 
@@ -31,6 +32,7 @@ class ReviewReplyRepository:
     async def list_for_review(review_id: UUID, db: AsyncSession) -> list[ReviewReply]:
         result = await db.execute(
             select(ReviewReply)
+            .options(selectinload(ReviewReply.author))
             .where(ReviewReply.review_id == review_id, ReviewReply.deleted_at.is_(None))
             .order_by(ReviewReply.created_at.asc(), ReviewReply.id.asc())
         )
