@@ -40,12 +40,21 @@ async def save_notifications_in_background(
 ) -> None:
     try:
         async with AsyncSessionLocal() as db:
-            await NotificationRepository.create_for_users(
+            notifications = await NotificationRepository.create_for_users(
                 user_ids, category, title, message, event_id, booking_id, review_id, db
             )
             await db.commit()
     except Exception:
         logger.exception("Failed to save background notifications")
+        return
+
+    for notification in notifications:
+        try:
+            await publish_notification(
+                NotificationResponse.model_validate(notification), notification.user_id
+            )
+        except Exception:
+            logger.exception("Failed to publish notification %s", notification.id)
 
 
 async def get_my_notifications(

@@ -49,6 +49,8 @@ async def create_review(
     _require_available(actor)
     await authorize_db(actor, Action.reviews_create, db)
     event = await _get_event_or_404(payload.event_id, db)
+    if event.organizer_id == actor.id:
+        raise HTTPException(status_code=403, detail="You cannot review your own event")
 
     if not await BookingRepository.has_confirmed_booking(event.id, actor.id, db):
         raise HTTPException(status_code=403, detail="A confirmed booking is required to review this event")
@@ -59,7 +61,7 @@ async def create_review(
         review = await ReviewRepository.create_review(
             event.id, actor.id, payload.rating, payload.comment, db
         )
-        response = ReviewResponse.model_validate(review)
+        response = ReviewResponse.model_validate(review).model_copy(update={"author_name": actor.name})
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -85,12 +87,15 @@ async def update_review(
     _require_available(actor)
     review = await _get_review_or_404(review_id, db)
     await authorize_db(actor, Action.reviews_edit, db, owner_id=review.author_id)
+    event = await _get_event_or_404(review.event_id, db)
+    if event.organizer_id == actor.id:
+        raise HTTPException(status_code=403, detail="You cannot review your own event")
 
     try:
         review = await ReviewRepository.update_review(
             review, payload.model_dump(exclude_unset=True), db
         )
-        response = ReviewResponse.model_validate(review)
+        response = ReviewResponse.model_validate(review).model_copy(update={"author_name": review.author.name})
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -113,7 +118,10 @@ async def list_event_reviews(
     await _get_event_or_404(event_id, db)
     reviews, total = await ReviewRepository.list_reviews_for_event(event_id, page, page_size, db)
     return ReviewListResponse(
-        items=[ReviewResponse.model_validate(review) for review in reviews],
+        items=[
+            ReviewResponse.model_validate(review).model_copy(update={"author_name": review.author.name})
+            for review in reviews
+        ],
         total=total,
         page=page,
         page_size=page_size,

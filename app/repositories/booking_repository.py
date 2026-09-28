@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -57,17 +57,18 @@ class BookingRepository:
         return result.scalar_one()
 
     @staticmethod
-    async def get_confirmed_attendee_ids(event_id: UUID, db: AsyncSession) -> list[UUID]:
+    async def cancel_for_event(event_id: UUID, db: AsyncSession) -> list[UUID]:
         result = await db.execute(
-            select(Booking.attendee_id)
+            update(Booking)
             .where(
                 Booking.event_id == event_id,
                 Booking.status == BookingStatus.confirmed,
                 Booking.deleted_at.is_(None),
             )
-            .distinct()
+            .values(status=BookingStatus.cancelled, cancelled_at=datetime.now(timezone.utc))
+            .returning(Booking.attendee_id)
         )
-        return list(result.scalars().all())
+        return list(set(result.scalars().all()))
 
     @staticmethod
     async def create_booking(
@@ -118,6 +119,24 @@ class BookingRepository:
         return booking
 
     @staticmethod
+    async def soft_delete(booking: Booking, db: AsyncSession) -> None:
+        booking.deleted_at = datetime.now(timezone.utc)
+        await db.flush()
+
+    @staticmethod
+    async def has_booking(event_id: UUID, user_id: UUID, db: AsyncSession) -> bool:
+        result = await db.scalar(
+            select(Booking.id)
+            .where(
+                Booking.event_id == event_id,
+                Booking.attendee_id == user_id,
+                Booking.deleted_at.is_(None),
+            )
+            .limit(1)
+        )
+        return result is not None
+
+    @staticmethod
     async def list_bookings_for_user(
         user_id: UUID, page: int, page_size: int, db: AsyncSession
     ) -> tuple[list[Booking], int]:
@@ -125,12 +144,29 @@ class BookingRepository:
         count_result = await db.execute(select(func.count(Booking.id)).where(*conditions))
         result = await db.execute(
             select(Booking)
+            .options(selectinload(Booking.event))
             .where(*conditions)
             .order_by(Booking.booked_at.desc(), Booking.id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
         return list(result.scalars().all()), count_result.scalar_one()
+
+    @staticmethod
+    async def list_all_bookings(
+        page: int, page_size: int, db: AsyncSession
+    ) -> tuple[list[Booking], int]:
+        conditions = (Booking.deleted_at.is_(None),)
+        total = await db.scalar(select(func.count(Booking.id)).where(*conditions))
+        result = await db.execute(
+            select(Booking)
+            .options(selectinload(Booking.event), selectinload(Booking.attendee))
+            .where(*conditions)
+            .order_by(Booking.booked_at.desc(), Booking.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        return list(result.scalars().all()), total
 
     @staticmethod
     async def has_confirmed_booking(event_id: UUID, user_id: UUID, db: AsyncSession) -> bool:

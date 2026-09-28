@@ -17,8 +17,19 @@ async def get_audit_logs(
 ) -> AuditLogListResponse:
     await authorize_db(actor, Action.audit_logs_view, db)
     logs, total = await AuditLogRepository.list_logs(filters.page, filters.page_size, db)
+    names = await AuditLogRepository.entity_names(logs, db)
+    items = []
+    for log in logs:
+        entity_id = log.entity_id
+        if log.entity_type == "booking" and log.details:
+            entity_id = UUID(log.details["event_id"]) if log.details.get("event_id") else None
+        items.append(
+            AuditLogResponse.model_validate(log).model_copy(
+                update={"entity_name": names.get(entity_id)}
+            )
+        )
     return AuditLogListResponse(
-        items=[AuditLogResponse.model_validate(log) for log in logs],
+        items=items,
         total=total,
         page=filters.page,
         page_size=filters.page_size,

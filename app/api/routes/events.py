@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
 from app.models.users import User
-from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
+from app.schemas.events import AdminEventFilters, EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
 from app.services import event_service
 
 router = APIRouter(prefix="/events", tags=["events"])
@@ -39,6 +39,15 @@ async def get_my_events(
     return await event_service.get_my_events(actor, db)
 
 
+@router.get("/admin", response_model=EventListResponse)
+async def list_all_events(
+    filters: Annotated[AdminEventFilters, Query()],
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> EventListResponse:
+    return await event_service.list_all_events(actor, filters, db)
+
+
 @router.get("/{event_id}", response_model=EventResponse)
 async def get_published_event(
     event_id: UUID,
@@ -54,6 +63,15 @@ async def get_managed_event(
     db: AsyncSession = Depends(get_db),
 ) -> EventResponse:
     return await event_service.get_managed_event(actor, event_id, db)
+
+
+@router.get("/{event_id}/attended", response_model=EventResponse)
+async def get_attended_event(
+    event_id: UUID,
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> EventResponse:
+    return await event_service.get_attended_event(actor, event_id, db)
 
 
 @router.get("/{event_id}/availability", response_model=EventAvailabilityResponse)
@@ -101,3 +119,13 @@ async def cancel_event(
     db: AsyncSession = Depends(get_db),
 ) -> EventResponse:
     return await event_service.cancel_event(actor, event_id, db, background_tasks)
+
+
+@router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_event(
+    event_id: UUID,
+    background_tasks: BackgroundTasks,
+    actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await event_service.delete_event(actor, event_id, db, background_tasks)

@@ -1,251 +1,100 @@
 # EventDesk
 
-EventDesk is a FastAPI backend for an event management platform. Auth, user management, roles, and event management are available.
+EventDesk is an event booking application with a FastAPI API and a React web interface. Organizers publish events, people reserve tickets, and administrators manage users and activity.
 
-This is a layered app:
-- Routes accept HTTP requests
-- Services handle business logic
-- Repositories talk to the database
-- Models define the database structure
-- Dependencies verify tokens and user identity
+## Features
 
----
+- Registration, sign in and sign out with hashed passwords, short lived JWT access tokens, and rotating refresh tokens.
+- Database backed permissions for admins, organizers, and attendees; profile and account management.
+- Draft, published, completed, and cancelled events with categories, tags, search, filters, and pagination.
+- Ticket booking and cancellation with PostgreSQL row locks and a single transaction to prevent overselling. Event cancellation also cancels its active bookings.
+- Ratings, reviews, and one level of replies; notifications; audit logs.
+- Live ticket availability and notification updates through WebSockets.
+- Scheduled event completion and email reminders through a systemd timer and Brevo.
+- Soft deletion of users, events, bookings, reviews, and related catalog records.
 
-## What this project does
+## Stack and structure
 
-The current version includes:
-- User registration
-- Login and logout
-- Refresh token flow
-- JWT-based access control
-- User profile update
-- Password change
-- Admin-only user listing, role updates, activation toggles, and soft delete
-- Health checks for the API and database
-- PostgreSQL async connection using SQLAlchemy
-- Event creation, editing, publishing, completion, cancellation, and public browsing
-- Categories, tags, and cancellation notifications
+Python 3.12, FastAPI, Pydantic, SQLAlchemy AsyncIO, PostgreSQL, Alembic, React 19, Vite, and pnpm.
 
-Booking and review API flows are future work; their database tables are already included in the migrations.
-
----
-
-## Request flow: where a request starts and ends
-
-A normal request moves like this:
-
-1. The client sends an HTTP request to the API.
-2. FastAPI loads the app from [app/main.py](app/main.py).
-3. The request matches a router in one of the route files under [app/api/routes](app/api/routes).
-4. The route calls a service in [app/services](app/services).
-5. The service applies the business logic, validation, and access checks.
-6. The service calls a repository in [app/repositories](app/repositories) to read or write data.
-7. The repository uses SQLAlchemy models in [app/models](app/models) to interact with PostgreSQL.
-8. The response is returned back to the client.
-
-Example:
-- POST /auth/login
-- route: [app/api/routes/auth.py](app/api/routes/auth.py)
-- service: [app/services/auth_service.py](app/services/auth_service.py)
-- repository: [app/repositories/user_repository.py](app/repositories/user_repository.py) and [app/repositories/refresh_token_repository.py](app/repositories/refresh_token_repository.py)
-- database: PostgreSQL via [app/db/session.py](app/db/session.py)
-
----
-
-## Auth flow in simple words
-
-### 1) Register
-Client sends:
-- name
-- email
-- password
-- role
-
-The request hits the register route in [app/api/routes/auth.py](app/api/routes/auth.py). The service checks whether the email already exists, creates the user, and issues a fresh access + refresh token pair.
-
-### 2) Login
-Client sends email + password.
-
-The app:
-- finds the user by email
-- verifies the password hash
-- checks if the account is active
-- issues a new token pair
-
-### 3) Access token usage
-The access token is used for protected routes.
-
-The token is read in [app/core/dependencies.py](app/core/dependencies.py), where the app:
-- extracts the bearer token
-- validates the JWT
-- loads the user from the database
-- rejects invalid, deleted, or inactive users
-
-This is how the app knows who is making the request.
-
-### 4) Refresh token flow
-When the access token expires, the client sends the refresh token to POST /auth/refresh.
-
-The system:
-- validates the refresh token type
-- loads the user
-- checks that the token is still stored and not revoked/expired
-- issues a new access + refresh token pair
-- invalidates the old refresh token after rotation
-
-### 5) Logout
-Client sends the latest refresh token to POST /auth/logout.
-
-The app marks that refresh token as revoked, so it can no longer be used.
-
----
-
-## Folder layout and how they connect
-
-### [app/main.py](app/main.py)
-This is the entry file for FastAPI. It pulls in the routers and exposes the app object.
-
-### [app/api/routes](app/api/routes)
-This folder contains API endpoints.
-- [app/api/routes/auth.py](app/api/routes/auth.py): register, login, refresh, logout, me
-- [app/api/routes/users.py](app/api/routes/users.py): profile and admin user actions
-- [app/api/routes/health.py](app/api/routes/health.py): health endpoints
-- [app/api/routes/events.py](app/api/routes/events.py): event management and public browsing
-- [app/api/routes/categories.py](app/api/routes/categories.py) and [app/api/routes/tags.py](app/api/routes/tags.py): catalog endpoints
-- [app/api/routes/notifications.py](app/api/routes/notifications.py): current user's notifications
-
-### [app/services](app/services)
-This is where business logic lives.
-- [app/services/auth_service.py](app/services/auth_service.py): auth logic
-- [app/services/user_service.py](app/services/user_service.py): profile and admin user rules
-- [app/services/authorization_service.py](app/services/authorization_service.py): permission checks
-- [app/services/event_service.py](app/services/event_service.py): event rules and status changes
-- [app/services/notification_service.py](app/services/notification_service.py): notification access
-
-### [app/repositories](app/repositories)
-Repositories handle database queries.
-- [app/repositories/user_repository.py](app/repositories/user_repository.py): user lookups and updates
-- [app/repositories/refresh_token_repository.py](app/repositories/refresh_token_repository.py): refresh token storage and rotation
-- [app/repositories/event_repository.py](app/repositories/event_repository.py): event queries and persistence
-- [app/repositories/notification_repository.py](app/repositories/notification_repository.py): notification queries and persistence
-
-### [app/models](app/models)
-This is the database model layer.
-- [app/models/users.py](app/models/users.py): user table
-- [app/models/refresh_tokens.py](app/models/refresh_tokens.py): refresh tokens
-- [app/models/events.py](app/models/events.py), [app/models/bookings.py](app/models/bookings.py), etc.: domain models for the broader event platform
-
-### [app/core](app/core)
-Core infrastructure for the app.
-- [app/core/config.py](app/core/config.py): settings and environment loading
-- [app/core/security.py](app/core/security.py): password hashing and JWT creation/validation
-- [app/core/dependencies.py](app/core/dependencies.py): auth and DB dependencies for routes
-- [app/core/role_policy.py](app/core/role_policy.py): role-based permission rules
-
-### [app/db](app/db)
-Database setup and async engine config.
-- [app/db/session.py](app/db/session.py): SQLAlchemy async engine and session maker
-- [app/db/base.py](app/db/base.py): base model + timestamp mixin
-
-### [app/schemas](app/schemas)
-Input/output validation types.
-- [app/schemas/user.py](app/schemas/user.py): user-related request and response models
-- [app/schemas/auth.py](app/schemas/auth.py): token and auth payload schemas
-
----
-
-## Local setup
-
-From the project root:
-
-```bash
-uv sync --frozen
+```text
+app/
+  api/routes/       HTTP and WebSocket endpoints
+  schemas/          Request and response validation
+  services/         Business rules and transactions
+  repositories/     Database queries
+  models/           SQLAlchemy tables
+  core/             Settings, authentication, permissions
+  realtime/         WebSocket connections and publishing
+  jobs/             Scheduled work
+  integrations/     Brevo email client
+alembic/            Database migrations
+frontend/src/       React pages, components, and API client
 ```
 
-This workspace's local PostgreSQL cluster is stored in `.local-postgres/data-v2`. Its user systemd service starts it automatically. Check it with:
+A request generally follows **route → service → repository → PostgreSQL**. Services enforce permissions and business rules; repositories handle queries. The ERD is in [EventDesk ERD HD.svg](EventDesk%20ERD%20HD.svg).
+
+## Run locally
+
+Prerequisites: Python 3.12, `uv`, PostgreSQL, Node.js 20+, and pnpm. Run backend commands from the project root. The existing local PostgreSQL service on this machine uses port `55432`; on another machine, use your own PostgreSQL instance and set its host and port in `.env`.
+
+1. Install Python dependencies and configure secrets:
+
+   ```bash
+   uv sync --frozen
+   cp .env.example .env
+   ```
+
+   If `.env` already exists, keep it and do not overwrite it. Set `DATABASE_URL`, a random `SECRET_KEY` of at least 32 characters, the CORS origins, and the Brevo settings in `.env`. For a new database, create a PostgreSQL role and database first; use that role's password in `DATABASE_URL`. Never commit `.env`.
+
+2. Start PostgreSQL and apply migrations:
+
+   ```bash
+   systemctl --user start eventdesk-postgres.service
+   .venv/bin/alembic upgrade head
+   .venv/bin/alembic check
+   ```
+
+   The `systemctl` command applies to this repository's local Linux setup. With a separately installed PostgreSQL server, start that server by its usual method instead. The database URL must point to the running server. A new checkout on another computer should also update the absolute paths in the supplied `.service` and `.timer` files before using them.
+
+3. Start the API:
+
+   ```bash
+   .venv/bin/uvicorn app.main:app --reload
+   ```
+
+   Open [API docs](http://127.0.0.1:8000/docs). Keep this terminal running.
+
+4. In a second terminal, start the frontend:
+
+   ```bash
+   cd frontend
+   pnpm install --frozen-lockfile
+   pnpm dev
+   ```
+
+   Open [EventDesk](http://127.0.0.1:5173). Vite forwards `/api` and `/ws` to the API at `127.0.0.1:8000`. Both servers must be running while using the site.
+
+## Scheduled jobs and email
+
+The `eventdesk-jobs.timer` runs every five minutes while its Linux user timer is active. It marks past events completed and sends due email reminders. The timer does not depend on the browser or API process, but it does depend on this computer being available. Start and inspect it with:
 
 ```bash
-systemctl --user status eventdesk-postgres.service
-```
-
-The user timer runs event completion and email reminders every five minutes while this computer is on. It is independent of the FastAPI server. After a shutdown, `Persistent=true` runs the job once when the timer starts again. Check the schedule and output with:
-
-```bash
+systemctl --user enable --now eventdesk-jobs.timer
 systemctl --user list-timers eventdesk-jobs.timer
 journalctl --user -u eventdesk-jobs.service -n 30 --no-pager
 ```
 
-The units are already installed on this machine. To reinstall them after moving the project, update their absolute paths first, then run from the project root:
+Set `BREVO_API_KEY` to a Brevo **API key**, and `BREVO_SENDER_EMAIL` to a verified sender. An SMTP key is for SMTP connections and is not accepted by the HTTP API used here. If Brevo rejects a reminder, the job logs the failure and leaves that reminder eligible for a later run.
+
+## Verification
+
+The repository does not currently include an automated test suite. These commands check imports, migration/model consistency, and the production frontend build:
 
 ```bash
-systemctl --user link "$PWD"/eventdesk-postgres.service "$PWD"/eventdesk-jobs.service "$PWD"/eventdesk-jobs.timer
-systemctl --user daemon-reload
-systemctl --user enable --now eventdesk-postgres.service eventdesk-jobs.timer
-loginctl enable-linger "$USER"
-```
-
-The local [.env](.env) already has a working connection. For another machine, copy `.env.example` to `.env` and set the actual database password and a secret key of at least 32 characters.
-
-Example:
-
-```env
-DATABASE_URL=postgresql+asyncpg://eventdesk:YOUR_DATABASE_PASSWORD@127.0.0.1:55432/eventdesk
-SECRET_KEY=REPLACE_WITH_AT_LEAST_32_RANDOM_CHARACTERS
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
-```
-
-Apply both migrations, verify that the ORM models match PostgreSQL, then start the app:
-
-```bash
-.venv/bin/alembic upgrade head
+.venv/bin/python -m compileall -q app alembic
 .venv/bin/alembic check
-.venv/bin/uvicorn app.main:app --reload
+cd frontend && pnpm build
 ```
 
-After one active admin exists, use the admin role-change endpoint to promote other users.
-
-Open the docs here:
-- http://127.0.0.1:8000/docs
-
-After changing a model, create and inspect a new migration before applying it:
-
-```bash
-.venv/bin/alembic revision --autogenerate -m "describe your model change"
-.venv/bin/alembic upgrade head
-.venv/bin/alembic check
-```
-
-Alembic records applied revisions in `alembic_version`. Existing tables by themselves do not mark a migration as applied. If you use a different database that already has manually created tables, inspect its schema and revision before applying these migrations; do not stamp an unverified schema. The old `.local-postgres/data` directory was incomplete and has been left untouched.
-
----
-
-## Completed work
-
-The following is done and working in the project structure:
-- Async FastAPI app setup
-- SQLAlchemy + PostgreSQL async engine
-- UUID-based user identifiers
-- User model with role support
-- Password hashing with bcrypt
-- JWT access and refresh token flow
-- Refresh token rotation and revocation
-- Auth dependency for bearer token validation
-- User profile and account management routes
-- Role-based authorization checks
-- Health endpoints for API and database
-- Clean service/repository separation
-- Event management routes and public event filtering/sorting
-- Migration covering all current models; verified with `alembic check`
-
----
-
-## Still in progress / next layer
-
-The event platform is not fully finished yet. The next likely work items are:
-- booking flow
-- review system
-- additional notification flows beyond event cancellation
-
-Auth, users, and events are ready to run locally. Booking and review endpoints can be built on the migrated tables next.
+For a manual smoke test, use the frontend or `/docs` to register, create and publish an event, book it from another account, cancel the event, and confirm the booking becomes cancelled. Check that admins can list events of every status, and that a user with a booking can still open a completed event to review it. New schema changes require an Alembic migration before running the API against that database.

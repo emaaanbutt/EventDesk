@@ -19,6 +19,7 @@ class ReviewReplyResponse(BaseModel):
     id: UUID
     review_id: UUID
     author_id: UUID
+    author_name: str | None = None
     comment: str
     created_at: datetime
     updated_at: datetime | None

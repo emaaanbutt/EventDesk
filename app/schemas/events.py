@@ -132,6 +132,20 @@ class EventFilters(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+
+class AdminEventFilters(BaseModel):
+    search: str | None = Field(default=None, min_length=1, max_length=100)
+    status: EventStatus | None = None
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=20, ge=1, le=100)
+
+    @field_validator("search", mode="before")
+    @classmethod
+    def strip_search(cls, value: str | None) -> str | None:
+        return _strip_text(value)
+
+    model_config = ConfigDict(extra="forbid")
+
 class EventAvailabilityResponse(BaseModel):
     event_id: UUID
     total_tickets: int = Field(ge=0)
