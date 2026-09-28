@@ -15,7 +15,7 @@ from app.models.users import User
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.event_repository import EventRepository
 from app.realtime.publisher import publish_event_availability
-from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
+from app.schemas.events import AdminEventFilters, EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
 from app.services import notification_service
 from app.services.audit_log_service import record_audit_log
 from app.services.authorization_service import authorize_db
@@ -202,7 +202,7 @@ async def cancel_event(
     _ensure_cancellable(event)
 
     try:
-        attendee_ids = await BookingRepository.get_confirmed_attendee_ids(event.id, db)
+        attendee_ids = await BookingRepository.cancel_for_event(event.id, db)
         await EventRepository.set_status(event, EventStatus.cancelled, db)
         await record_audit_log(actor.id, Action.events_cancel, "event", event.id, None, db)
         response = _to_response(event)
@@ -225,8 +225,51 @@ async def cancel_event(
     return response
 
 
+async def delete_event(
+    actor: User, event_id: UUID, db: AsyncSession, background_tasks: BackgroundTasks
+) -> None:
+    _require_available(actor)
+    event = await _get_event_for_change_or_404(event_id, db)
+    await authorize_db(actor, Action.events_delete, db, owner_id=event.organizer_id)
+    try:
+        attendee_ids = (
+            await BookingRepository.cancel_for_event(event.id, db)
+            if event.status != EventStatus.completed else []
+        )
+        await EventRepository.soft_delete(event, db)
+        await record_audit_log(actor.id, Action.events_delete, "event", event.id, None, db)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Event could not be deleted") from None
+    background_tasks.add_task(publish_event_availability, event.id)
+    if attendee_ids:
+        background_tasks.add_task(
+            notification_service.save_notifications_in_background,
+            user_ids=attendee_ids,
+            category=NotificationCategory.event,
+            title="Event removed",
+            message=f"{event.title} has been removed.",
+            event_id=event.id,
+            booking_id=None,
+            review_id=None,
+        )
+
+
 async def list_published_events(filters: EventFilters, db: AsyncSession) -> EventListResponse:
     events, total = await EventRepository.list_published(filters, db)
+    return EventListResponse(
+        items=[_to_response(event) for event in events],
+        total=total,
+        page=filters.page,
+        page_size=filters.page_size,
+    )
+
+
+async def list_all_events(actor: User, filters: AdminEventFilters, db: AsyncSession) -> EventListResponse:
+    _require_available(actor)
+    await authorize_db(actor, Action.events_view_all, db)
+    events, total = await EventRepository.list_all(filters, db)
     return EventListResponse(
         items=[_to_response(event) for event in events],
         total=total,
@@ -240,6 +283,14 @@ async def get_published_event(event_id: UUID, db: AsyncSession) -> EventResponse
     if event.status != EventStatus.published:
         raise HTTPException(status_code=404, detail="Event not found")
     return _to_response(event)
+
+
+async def get_attended_event(actor: User, event_id: UUID, db: AsyncSession) -> EventResponse:
+    _require_available(actor)
+    await authorize_db(actor, Action.bookings_view, db, owner_id=actor.id)
+    if not await BookingRepository.has_booking(event_id, actor.id, db):
+        raise HTTPException(status_code=404, detail="Event not found")
+    return _to_response(await _get_event_or_404(event_id, db))
 
 
 async def get_my_events(actor: User, db: AsyncSession) -> list[EventResponse]:

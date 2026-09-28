@@ -262,7 +262,7 @@ export function Reviews({ eventId, event }) {
         </div>
       </div>
       <Alert message={error} />
-      {user && user.id !== event.organizer_id && (
+      {user && user.id !== event.organizer_id && event.status !== "cancelled" && (
         <form onSubmit={addReview} className="review-compose">
           <h3>Leave a review</h3>
           <p className="muted">
