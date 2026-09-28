@@ -22,7 +22,11 @@ class ReviewRepository:
     async def get_by_author_and_event(author_id: UUID, event_id: UUID, db: AsyncSession) -> Review | None:
         result = await db.execute(
             select(Review)
-            .where(Review.author_id == author_id, Review.event_id == event_id)
+            .where(
+                Review.author_id == author_id,
+                Review.event_id == event_id,
+                Review.deleted_at.is_(None),
+            )
         )
 
         return result.scalar_one_or_none()
