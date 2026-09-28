@@ -1,0 +1,530 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="5000" height="2450" viewBox="0 0 5000 2450">
+<title>EventDesk ERD — updated schema</title>
+<defs><radialGradient id="bg" cx="48%" cy="12%" r="90%"><stop offset="0%" stop-color="#141b29"/><stop offset="100%" stop-color="#0e1118"/></radialGradient>
+<marker id="arrow-slate" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,4 L0,8 Z" fill="#526177"/></marker>
+<marker id="arrow-orange" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,4 L0,8 Z" fill="#b9560d"/></marker>
+<marker id="arrow-purple" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,4 L0,8 Z" fill="#8922cf"/></marker>
+<marker id="arrow-gray" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,4 L0,8 Z" fill="#7e91aa"/></marker>
+<marker id="arrow-green" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,4 L0,8 Z" fill="#148747"/></marker>
+<marker id="arrow-blue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,4 L0,8 Z" fill="#2d69ec"/></marker>
+</defs><rect width="5000" height="2450" fill="url(#bg)"/>
+<path d="M810 265 H850 V510 H1710 V690 H1800" fill="none" stroke="#2d69ec" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-blue)"/>
+<path d="M810 285 H870 V75 H2670 V628 H2730" fill="none" stroke="#2d69ec" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-blue)"/>
+<path d="M810 305 H890 V60 H2640 V1074 H2730" fill="none" stroke="#2d69ec" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-blue)"/>
+<path d="M810 325 H910 V48 H3610 V704 H3670" fill="none" stroke="#2d69ec" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-blue)"/>
+<path d="M810 345 H850 V1083 H810" fill="none" stroke="#2d69ec" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-blue)"/>
+<path d="M810 365 H870 V1284 H810" fill="none" stroke="#7e91aa" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-gray)"/>
+<path d="M810 385 H905 V40 H3630 V1715 H3670" fill="none" stroke="#7e91aa" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-gray)"/>
+<path d="M1610 257 H1730 V218 H1800" fill="none" stroke="#8922cf" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-purple)"/>
+<path d="M1610 933 H1700 V1190 H1800" fill="none" stroke="#8922cf" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-purple)"/>
+<path d="M2590 176 H2640 V1108 H2590" fill="none" stroke="#8922cf" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-purple)"/>
+<path d="M2590 195 H2670 V608 H2730" fill="none" stroke="#b9560d" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-orange)"/>
+<path d="M2590 216 H2690 V992 H2730" fill="none" stroke="#148747" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-green)"/>
+<path d="M2590 238 H2620 V85 H3570 V1285 H3670" fill="none" stroke="#526177" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-slate)"/>
+<path d="M3520 176 H3570 V1244 H3670" fill="none" stroke="#526177" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-slate)"/>
+<path d="M3520 992 H3590 V725 H3670" fill="none" stroke="#148747" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-green)"/>
+<path d="M3520 1013 H3610 V1326 H3670" fill="none" stroke="#526177" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-slate)"/>
+<path d="M810 1813 H870 V1854 H930" fill="none" stroke="#b9560d" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88" marker-end="url(#arrow-orange)"/>
+<g id="table-users">
+<rect x="90" y="145" width="720" height="421" rx="11" fill="#151b26" stroke="#2d69ec" stroke-width="2.4"/>
+<path d="M 101,145 H 799 Q 810,145 810,156 V 197 H 90 V 156 Q 90,145 101,145 Z" fill="#2d69ec"/>
+<text x="107" y="180" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">users</text>
+<path d="M 378,197 V 566 M 550,197 V 566" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 90,197 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="224" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="390" y="224" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="562" y="224" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 90,238 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="265" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">name</text>
+<text x="390" y="265" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(100)</text>
+<text x="562" y="265" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,279 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="306" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">email</text>
+<text x="390" y="306" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(255)</text>
+<text x="562" y="306" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">UNIQUE, NOT NULL</text>
+<path d="M 90,320 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="347" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">password_hash</text>
+<text x="390" y="347" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar</text>
+<text x="562" y="347" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,361 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="388" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">role</text>
+<text x="390" y="388" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">enum</text>
+<text x="562" y="388" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="12" textLength="235" lengthAdjust="spacingAndGlyphs">NOT NULL; ADMIN / ORGANIZER / ATTENDEE</text>
+<path d="M 90,402 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="429" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">is_active</text>
+<text x="390" y="429" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">boolean</text>
+<text x="562" y="429" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">NOT NULL; app default true</text>
+<path d="M 90,443 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="470" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="390" y="470" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="470" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,484 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="511" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="390" y="511" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="511" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,525 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="552" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="390" y="552" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="552" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+</g>
+<g id="table-refresh_tokens">
+<rect x="90" y="745" width="720" height="380" rx="11" fill="#151b26" stroke="#2d69ec" stroke-width="2.4"/>
+<path d="M 101,745 H 799 Q 810,745 810,756 V 797 H 90 V 756 Q 90,745 101,745 Z" fill="#2d69ec"/>
+<text x="107" y="780" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">refresh_tokens</text>
+<path d="M 378,797 V 1125 M 550,797 V 1125" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 90,797 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="824" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="390" y="824" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="562" y="824" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 90,838 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="865" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">token_hash</text>
+<text x="390" y="865" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(255)</text>
+<text x="562" y="865" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">UNIQUE, NOT NULL</text>
+<path d="M 90,879 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="906" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">expires_at</text>
+<text x="390" y="906" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="906" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,920 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="947" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">revoked_at</text>
+<text x="390" y="947" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="947" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 90,961 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="988" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="390" y="988" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="988" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,1002 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1029" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="390" y="1029" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="1029" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,1043 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1070" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="390" y="1070" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="1070" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 90,1084 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1111" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">user_id</text>
+<text x="390" y="1111" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="562" y="1111" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+</g>
+<g id="table-audit_logs">
+<rect x="90" y="1170" width="720" height="339" rx="11" fill="#151b26" stroke="#526177" stroke-width="2.4"/>
+<path d="M 101,1170 H 799 Q 810,1170 810,1181 V 1222 H 90 V 1181 Q 90,1170 101,1170 Z" fill="#526177"/>
+<text x="107" y="1205" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">audit_logs</text>
+<path d="M 378,1222 V 1509 M 550,1222 V 1509" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 90,1222 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1249" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="390" y="1249" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="562" y="1249" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 90,1263 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1290" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">actor_user_id</text>
+<text x="390" y="1290" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="562" y="1290" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NULL</text>
+<path d="M 90,1304 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1331" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">action</text>
+<text x="390" y="1331" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(100)</text>
+<text x="562" y="1331" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,1345 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1372" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">entity_type</text>
+<text x="390" y="1372" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(100)</text>
+<text x="562" y="1372" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,1386 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1413" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">entity_id</text>
+<text x="390" y="1413" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="562" y="1413" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 90,1427 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1454" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">details</text>
+<text x="390" y="1454" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">jsonb</text>
+<text x="562" y="1454" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 90,1468 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1495" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="390" y="1495" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="1495" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+</g>
+<g id="table-permissions">
+<rect x="90" y="1700" width="720" height="298" rx="11" fill="#151b26" stroke="#b9560d" stroke-width="2.4"/>
+<path d="M 101,1700 H 799 Q 810,1700 810,1711 V 1752 H 90 V 1711 Q 90,1700 101,1700 Z" fill="#b9560d"/>
+<text x="107" y="1735" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">permissions</text>
+<path d="M 378,1752 V 1998 M 550,1752 V 1998" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 90,1752 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1779" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="390" y="1779" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="562" y="1779" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 90,1793 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1820" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">code</text>
+<text x="390" y="1820" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(100)</text>
+<text x="562" y="1820" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">UNIQUE, NOT NULL</text>
+<path d="M 90,1834 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1861" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">description</text>
+<text x="390" y="1861" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(255)</text>
+<text x="562" y="1861" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,1875 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1902" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="390" y="1902" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="1902" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,1916 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1943" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="390" y="1943" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="1943" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 90,1957 H 810" stroke="#303b4c" stroke-width="1.05"/>
+<text x="104" y="1984" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="390" y="1984" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="562" y="1984" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+</g>
+<g id="table-categories">
+<rect x="930" y="145" width="680" height="257" rx="11" fill="#151b26" stroke="#8922cf" stroke-width="2.4"/>
+<path d="M 941,145 H 1599 Q 1610,145 1610,156 V 197 H 930 V 156 Q 930,145 941,145 Z" fill="#8922cf"/>
+<text x="947" y="180" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">categories</text>
+<path d="M 1202,197 V 402 M 1365,197 V 402" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 930,197 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="224" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="1214" y="224" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="1377" y="224" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 930,238 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="265" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">name</text>
+<text x="1214" y="265" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(255)</text>
+<text x="1377" y="265" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">UNIQUE, NOT NULL</text>
+<path d="M 930,279 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="306" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="1214" y="306" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="1377" y="306" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 930,320 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="347" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="1214" y="347" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="1377" y="347" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 930,361 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="388" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="1214" y="388" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="1377" y="388" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+</g>
+<g id="table-tags">
+<rect x="930" y="820" width="680" height="257" rx="11" fill="#151b26" stroke="#8922cf" stroke-width="2.4"/>
+<path d="M 941,820 H 1599 Q 1610,820 1610,831 V 872 H 930 V 831 Q 930,820 941,820 Z" fill="#8922cf"/>
+<text x="947" y="855" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">tags</text>
+<path d="M 1202,872 V 1077 M 1365,872 V 1077" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 930,872 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="899" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="1214" y="899" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="1377" y="899" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 930,913 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="940" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">name</text>
+<text x="1214" y="940" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(255)</text>
+<text x="1377" y="940" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">UNIQUE, NOT NULL</text>
+<path d="M 930,954 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="981" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="1214" y="981" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="1377" y="981" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 930,995 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="1022" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="1214" y="1022" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="1377" y="1022" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 930,1036 H 1610" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="1063" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="1214" y="1063" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="1377" y="1063" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+</g>
+<g id="table-role_permissions">
+<rect x="930" y="1700" width="810" height="298" rx="11" fill="#151b26" stroke="#b9560d" stroke-width="2.4"/>
+<path d="M 941,1700 H 1729 Q 1740,1700 1740,1711 V 1752 H 930 V 1711 Q 930,1700 941,1700 Z" fill="#b9560d"/>
+<text x="947" y="1735" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">role_permissions</text>
+<path d="M 1254,1752 V 1998 M 1448,1752 V 1998" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 930,1752 H 1740" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="1779" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="1266" y="1779" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="1460" y="1779" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 930,1793 H 1740" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="1820" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">role</text>
+<text x="1266" y="1820" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">enum</text>
+<text x="1460" y="1820" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="12" textLength="267" lengthAdjust="spacingAndGlyphs">NOT NULL; ADMIN / ORGANIZER / ATTENDEE</text>
+<path d="M 930,1834 H 1740" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="1861" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">permission_id</text>
+<text x="1266" y="1861" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="1460" y="1861" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 930,1875 H 1740" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="1902" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">scope</text>
+<text x="1266" y="1902" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">enum</text>
+<text x="1460" y="1902" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="11" textLength="267" lengthAdjust="spacingAndGlyphs">NOT NULL; GLOBAL / SELF / OWN / OWN_EVENT / ANY</text>
+<path d="M 930,1916 H 1740" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="1943" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="1266" y="1943" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="1460" y="1943" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 930,1957 H 1740" stroke="#303b4c" stroke-width="1.05"/>
+<text x="944" y="1984" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">UNIQUE (role, permission_id)</text>
+</g>
+<g id="table-events">
+<rect x="1800" y="105" width="790" height="667" rx="11" fill="#151b26" stroke="#8922cf" stroke-width="2.4"/>
+<path d="M 1811,105 H 2579 Q 2590,105 2590,116 V 157 H 1800 V 116 Q 1800,105 1811,105 Z" fill="#8922cf"/>
+<text x="1817" y="140" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">events</text>
+<path d="M 2116,157 V 772 M 2305,157 V 772" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 1800,157 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="184" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="2128" y="184" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="2317" y="184" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 1800,198 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="225" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">category_id</text>
+<text x="2128" y="225" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="2317" y="225" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NULL</text>
+<path d="M 1800,239 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="266" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">title</text>
+<text x="2128" y="266" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(255)</text>
+<text x="2317" y="266" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,280 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="307" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">description</text>
+<text x="2128" y="307" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">text</text>
+<text x="2317" y="307" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,321 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="348" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">venue</text>
+<text x="2128" y="348" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(255)</text>
+<text x="2317" y="348" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,362 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="389" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">starts_at</text>
+<text x="2128" y="389" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="2317" y="389" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,403 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="430" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">ends_at</text>
+<text x="2128" y="430" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="2317" y="430" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,444 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="471" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">ticket_price</text>
+<text x="2128" y="471" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">decimal(10,2)</text>
+<text x="2317" y="471" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,485 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="512" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">total_tickets</text>
+<text x="2128" y="512" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">integer</text>
+<text x="2317" y="512" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,526 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="553" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">status</text>
+<text x="2128" y="553" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">enum</text>
+<text x="2317" y="553" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="11" textLength="260" lengthAdjust="spacingAndGlyphs">NOT NULL; DRAFT / PUBLISHED / CANCELLED / COMPLETED</text>
+<path d="M 1800,567 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="594" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="2128" y="594" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="2317" y="594" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,608 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="635" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="2128" y="635" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="2317" y="635" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 1800,649 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="676" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="2128" y="676" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="2317" y="676" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 1800,690 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="717" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">organizer_id</text>
+<text x="2128" y="717" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="2317" y="717" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 1800,731 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="758" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">CHECK (ends_at &gt; starts_at)</text>
+</g>
+<g id="table-event_tags">
+<rect x="1800" y="1015" width="790" height="216" rx="11" fill="#151b26" stroke="#8922cf" stroke-width="2.4"/>
+<path d="M 1811,1015 H 2579 Q 2590,1015 2590,1026 V 1067 H 1800 V 1026 Q 1800,1015 1811,1015 Z" fill="#8922cf"/>
+<text x="1817" y="1050" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">event_tags</text>
+<path d="M 2116,1067 V 1231 M 2305,1067 V 1231" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 1800,1067 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="1094" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="2128" y="1094" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="2317" y="1094" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 1800,1108 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="1135" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">event_id</text>
+<text x="2128" y="1135" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="2317" y="1135" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 1800,1149 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="1176" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">tag_id</text>
+<text x="2128" y="1176" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="2317" y="1176" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 1800,1190 H 2590" stroke="#303b4c" stroke-width="1.05"/>
+<text x="1814" y="1217" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">UNIQUE (event_id, tag_id)</text>
+</g>
+<g id="table-bookings">
+<rect x="2730" y="105" width="790" height="544" rx="11" fill="#151b26" stroke="#b9560d" stroke-width="2.4"/>
+<path d="M 2741,105 H 3509 Q 3520,105 3520,116 V 157 H 2730 V 116 Q 2730,105 2741,105 Z" fill="#b9560d"/>
+<text x="2747" y="140" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">bookings</text>
+<path d="M 3046,157 V 649 M 3235,157 V 649" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 2730,157 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="184" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="3058" y="184" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="3247" y="184" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 2730,198 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="225" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">quantity</text>
+<text x="3058" y="225" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">integer</text>
+<text x="3247" y="225" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 2730,239 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="266" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">total_amount</text>
+<text x="3058" y="266" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">decimal(10,2)</text>
+<text x="3247" y="266" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 2730,280 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="307" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">status</text>
+<text x="3058" y="307" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">enum</text>
+<text x="3247" y="307" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">NOT NULL; CONFIRMED / CANCELLED</text>
+<path d="M 2730,321 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="348" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">booked_at</text>
+<text x="3058" y="348" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="348" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 2730,362 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="389" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">cancelled_at</text>
+<text x="3058" y="389" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="389" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 2730,403 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="430" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">reminder_sent_at</text>
+<text x="3058" y="430" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="430" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 2730,444 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="471" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="3058" y="471" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="471" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 2730,485 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="512" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="3058" y="512" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="512" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 2730,526 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="553" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="3058" y="553" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="553" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 2730,567 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="594" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">event_id</text>
+<text x="3058" y="594" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="3247" y="594" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 2730,608 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="635" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">attendee_id</text>
+<text x="3058" y="635" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="3247" y="635" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+</g>
+<g id="table-reviews">
+<rect x="2730" y="920" width="790" height="421" rx="11" fill="#151b26" stroke="#148747" stroke-width="2.4"/>
+<path d="M 2741,920 H 3509 Q 3520,920 3520,931 V 972 H 2730 V 931 Q 2730,920 2741,920 Z" fill="#148747"/>
+<text x="2747" y="955" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">reviews</text>
+<path d="M 3046,972 V 1341 M 3235,972 V 1341" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 2730,972 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="999" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="3058" y="999" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="3247" y="999" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 2730,1013 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="1040" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">event_id</text>
+<text x="3058" y="1040" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="3247" y="1040" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 2730,1054 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="1081" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">author_id</text>
+<text x="3058" y="1081" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="3247" y="1081" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 2730,1095 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="1122" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">rating</text>
+<text x="3058" y="1122" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">smallint</text>
+<text x="3247" y="1122" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL; CHECK 1–5</text>
+<path d="M 2730,1136 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="1163" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">comment</text>
+<text x="3058" y="1163" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">text</text>
+<text x="3247" y="1163" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 2730,1177 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="1204" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="3058" y="1204" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="1204" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 2730,1218 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="1245" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="3058" y="1245" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="1245" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 2730,1259 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="1286" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="3058" y="1286" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="3247" y="1286" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 2730,1300 H 3520" stroke="#303b4c" stroke-width="1.05"/>
+<text x="2744" y="1327" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">UNIQUE (event_id, author_id)</text>
+<text x="3247" y="1327" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">WHERE deleted_at IS NULL</text>
+</g>
+<g id="table-review_replies">
+<rect x="3670" y="590" width="790" height="380" rx="11" fill="#151b26" stroke="#148747" stroke-width="2.4"/>
+<path d="M 3681,590 H 4449 Q 4460,590 4460,601 V 642 H 3670 V 601 Q 3670,590 3681,590 Z" fill="#148747"/>
+<text x="3687" y="625" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">review_replies</text>
+<path d="M 3986,642 V 970 M 4175,642 V 970" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 3670,642 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="669" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="3998" y="669" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="4187" y="669" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 3670,683 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="710" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">author_id</text>
+<text x="3998" y="710" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="4187" y="710" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 3670,724 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="751" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">review_id</text>
+<text x="3998" y="751" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="4187" y="751" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+<path d="M 3670,765 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="792" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">comment</text>
+<text x="3998" y="792" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">text</text>
+<text x="4187" y="792" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 3670,806 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="833" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="3998" y="833" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="4187" y="833" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 3670,847 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="874" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="3998" y="874" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="4187" y="874" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 3670,888 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="915" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="3998" y="915" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="4187" y="915" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 3670,929 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="956" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">UNIQUE (review_id, author_id)</text>
+</g>
+<g id="table-notifications">
+<rect x="3670" y="1130" width="790" height="585" rx="11" fill="#151b26" stroke="#526177" stroke-width="2.4"/>
+<path d="M 3681,1130 H 4449 Q 4460,1130 4460,1141 V 1182 H 3670 V 1141 Q 3670,1130 3681,1130 Z" fill="#526177"/>
+<text x="3687" y="1165" fill="#ffffff" font-family="DejaVu Sans,Arial,sans-serif" font-size="27" font-weight="700">notifications</text>
+<path d="M 3986,1182 V 1715 M 4175,1182 V 1715" stroke="#303b4c" stroke-width="1.1"/>
+<path d="M 3670,1182 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1209" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="700">id</text>
+<text x="3998" y="1209" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="4187" y="1209" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">PK</text>
+<path d="M 3670,1223 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1250" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">booking_id</text>
+<text x="3998" y="1250" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="4187" y="1250" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NULL</text>
+<path d="M 3670,1264 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1291" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">event_id</text>
+<text x="3998" y="1291" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="4187" y="1291" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NULL</text>
+<path d="M 3670,1305 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1332" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">review_id</text>
+<text x="3998" y="1332" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="4187" y="1332" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NULL</text>
+<path d="M 3670,1346 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1373" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">type</text>
+<text x="3998" y="1373" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">enum</text>
+<text x="4187" y="1373" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="13" textLength="260" lengthAdjust="spacingAndGlyphs">NOT NULL; BOOKING / EVENT / REVIEW</text>
+<path d="M 3670,1387 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1414" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">title</text>
+<text x="3998" y="1414" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">varchar(255)</text>
+<text x="4187" y="1414" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 3670,1428 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1455" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">message</text>
+<text x="3998" y="1455" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">text</text>
+<text x="4187" y="1455" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 3670,1469 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1496" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">is_read</text>
+<text x="3998" y="1496" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">boolean</text>
+<text x="4187" y="1496" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">NOT NULL; app default false</text>
+<path d="M 3670,1510 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1537" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">created_at</text>
+<text x="3998" y="1537" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="4187" y="1537" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 3670,1551 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1578" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">updated_at</text>
+<text x="3998" y="1578" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="4187" y="1578" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NOT NULL</text>
+<path d="M 3670,1592 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1619" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">deleted_at</text>
+<text x="3998" y="1619" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="4187" y="1619" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 3670,1633 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1660" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">read_at</text>
+<text x="3998" y="1660" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">timestamp</text>
+<text x="4187" y="1660" fill="#c1cada" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">NULL</text>
+<path d="M 3670,1674 H 4460" stroke="#303b4c" stroke-width="1.05"/>
+<text x="3684" y="1701" fill="#e4eaf3" font-family="DejaVu Sans,Arial,sans-serif" font-size="19" font-weight="400">user_id</text>
+<text x="3998" y="1701" fill="#8fc5ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">uuid</text>
+<text x="4187" y="1701" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">FK, NOT NULL</text>
+</g>
+<rect x="3670" y="2000" width="790" height="218" rx="12" fill="#151b26" stroke="#526177" stroke-width="2"/>
+<text x="3692" y="2043" fill="#f4f6fb" font-family="DejaVu Sans,Arial,sans-serif" font-size="26" font-weight="700">Legend</text>
+<text x="3692" y="2087" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="21">PK  Primary key</text>
+<text x="3692" y="2124" fill="#ffc12d" font-family="DejaVu Sans,Arial,sans-serif" font-size="21">FK  Foreign key</text>
+<text x="3692" y="2171" fill="#c4ccd8" font-family="DejaVu Sans,Arial,sans-serif" font-size="21">● one parent     ▶ many children</text>
+</svg>
