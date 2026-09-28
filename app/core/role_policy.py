@@ -27,6 +27,7 @@ class Action(StrEnum):
     reviews_edit = "reviews.edit"
     reviews_delete = "reviews.delete"
     notifications_view = "notifications.view"
+    notifications_update = "notifications.edit"
     audit_logs_view = "audit_logs.view"
 
 ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
@@ -54,6 +55,7 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.reviews_edit: PermissionScope.any,
         Action.reviews_delete: PermissionScope.any,
         Action.notifications_view: PermissionScope.self,
+        Action.notifications_update: PermissionScope.self,
         Action.audit_logs_view: PermissionScope.global_,
     },
     Role.organizer: {
@@ -74,6 +76,7 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.reviews_edit: PermissionScope.own,
         Action.reviews_delete: PermissionScope.own,
         Action.notifications_view: PermissionScope.self,
+        Action.notifications_update: PermissionScope.self,
     },
     Role.attendee: {
         Action.profile_update: PermissionScope.self,
@@ -86,5 +89,6 @@ ROLE_PERMISSIONS: dict[Role, dict[Action, PermissionScope]] = {
         Action.reviews_edit: PermissionScope.own,
         Action.reviews_delete: PermissionScope.own,
         Action.notifications_view: PermissionScope.self,
+        Action.notifications_update: PermissionScope.self,
     },
 }
