@@ -11,7 +11,7 @@ from app.models.users import User
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.tag_repository import TagRepository
 from app.schemas.catalog import CatalogItemCreate, CategoryResponse, TagResponse
-from app.services.authorization_service import authorize
+from app.services.authorization_service import authorize_db
 
 
 async def list_categories(db: AsyncSession) -> list[CategoryResponse]:
@@ -29,7 +29,7 @@ async def create_category(
 ) -> CategoryResponse:
     if not actor.is_active or actor.deleted_at is not None:
         raise HTTPException(status_code=403, detail="User account is unavailable")
-    authorize(actor, Action.categories_create)
+    await authorize_db(actor, Action.categories_create, db)
     if await CategoryRepository.get_by_name(payload.name, db) is not None:
         raise HTTPException(status_code=409, detail="Category already exists")
 
@@ -45,7 +45,7 @@ async def create_category(
 async def create_tag(actor: User, payload: CatalogItemCreate, db: AsyncSession) -> TagResponse:
     if not actor.is_active or actor.deleted_at is not None:
         raise HTTPException(status_code=403, detail="User account is unavailable")
-    authorize(actor, Action.tags_create)
+    await authorize_db(actor, Action.tags_create, db)
     if await TagRepository.get_by_name(payload.name, db) is not None:
         raise HTTPException(status_code=409, detail="Tag already exists")
 

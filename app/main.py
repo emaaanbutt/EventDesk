@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
+from app.api.routes.audit_logs import router as audit_logs_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.bookings import router as bookings_router
 from app.api.routes.categories import router as categories_router
@@ -15,6 +16,7 @@ from app.api.routes.tags import router as tags_router
 from app.api.routes.users import router as users_router
 
 app = FastAPI(title="EventDesk", version="1.0.0")
+app.include_router(audit_logs_router)
 app.include_router(auth_router)
 app.include_router(bookings_router)
 app.include_router(categories_router)

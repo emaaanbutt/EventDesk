@@ -14,7 +14,8 @@ from app.models.users import User
 from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserResponse, UserUpdate, validate_password_strength
-from app.services.authorization_service import authorize
+from app.services.audit_log_service import record_audit_log
+from app.services.authorization_service import authorize_db
 
 
 def _require_available(actor: User) -> None:
@@ -31,7 +32,7 @@ async def _get_target(user_id: UUID, db: AsyncSession) -> User:
 
 async def update_profile(actor: User, payload: UserUpdate, db: AsyncSession) -> UserResponse:
     _require_available(actor)
-    authorize(actor, Action.profile_update, owner_id=actor.id)
+    await authorize_db(actor, Action.profile_update, db, owner_id=actor.id)
 
     changes = payload.model_dump(exclude_unset=True)
     if not changes or any(value is None for value in changes.values()):
@@ -48,6 +49,10 @@ async def update_profile(actor: User, payload: UserUpdate, db: AsyncSession) -> 
         user = await UserRepository.update_user(actor.id, payload, db)
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
+        await record_audit_log(
+            actor.id, Action.profile_update, "user", user.id,
+            {"fields": sorted(changes)}, db,
+        )
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -61,7 +66,7 @@ async def change_password(
     actor: User, current_password: str, new_password: str, db: AsyncSession
 ) -> None:
     _require_available(actor)
-    authorize(actor, Action.password_change, owner_id=actor.id)
+    await authorize_db(actor, Action.password_change, db, owner_id=actor.id)
     if not verify_password(current_password, actor.password_hash):
         raise HTTPException(status_code=401, detail="Current password is incorrect")
     try:
@@ -73,12 +78,13 @@ async def change_password(
 
     await UserRepository.set_password_hash(actor, hash_password(new_password), db)
     await RefreshTokenRepository.revoke_all_for_user(actor.id, db)
+    await record_audit_log(actor.id, Action.password_change, "user", actor.id, None, db)
     await db.commit()
 
 
 async def list_users(actor: User, db: AsyncSession) -> list[UserResponse]:
     _require_available(actor)
-    authorize(actor, Action.users_list)
+    await authorize_db(actor, Action.users_list, db)
     users = await UserRepository.get_all(db)
     return [UserResponse.model_validate(user) for user in users]
 
@@ -86,7 +92,7 @@ async def list_users(actor: User, db: AsyncSession) -> list[UserResponse]:
 async def change_role(actor: User, user_id: UUID, new_role: Role, db: AsyncSession) -> UserResponse:
     """Change another user's role; admin only."""
     _require_available(actor)
-    authorize(actor, Action.users_role_change)
+    await authorize_db(actor, Action.users_role_change, db)
     target = await _get_target(user_id, db)
     if target.id == actor.id:
         raise HTTPException(status_code=409, detail="You cannot change your own role")
@@ -95,8 +101,13 @@ async def change_role(actor: User, user_id: UUID, new_role: Role, db: AsyncSessi
     except (ValueError, TypeError):
         raise HTTPException(status_code=422, detail="Invalid role") from None
     if target.role != role:
+        old_role = target.role
         await UserRepository.set_role(target, role, db)
         await RefreshTokenRepository.revoke_all_for_user(target.id, db)
+        await record_audit_log(
+            actor.id, Action.users_role_change, "user", target.id,
+            {"old_role": old_role.value, "new_role": role.value}, db,
+        )
         await db.commit()
         await db.refresh(target)
     return UserResponse.model_validate(target)
@@ -105,16 +116,21 @@ async def change_role(actor: User, user_id: UUID, new_role: Role, db: AsyncSessi
 async def set_active(actor: User, user_id: UUID, is_active: bool, db: AsyncSession) -> UserResponse:
     """Activate/deactivate an account; admin only."""
     _require_available(actor)
-    authorize(actor, Action.users_active_change)
+    await authorize_db(actor, Action.users_active_change, db)
     if not isinstance(is_active, bool):
         raise HTTPException(status_code=422, detail="is_active must be a boolean")
     target = await _get_target(user_id, db)
     if target.id == actor.id and not is_active:
         raise HTTPException(status_code=409, detail="You cannot deactivate your own account")
     if target.is_active != is_active:
+        was_active = target.is_active
         await UserRepository.set_active(target, is_active, db)
         if not is_active:
             await RefreshTokenRepository.revoke_all_for_user(target.id, db)
+        await record_audit_log(
+            actor.id, Action.users_active_change, "user", target.id,
+            {"was_active": was_active, "is_active": is_active}, db,
+        )
         await db.commit()
         await db.refresh(target)
     return UserResponse.model_validate(target)
@@ -123,10 +139,11 @@ async def set_active(actor: User, user_id: UUID, is_active: bool, db: AsyncSessi
 async def soft_delete_user(actor: User, user_id: UUID, db: AsyncSession) -> None:
     """Mark another account deleted without removing its database row; admin only."""
     _require_available(actor)
-    authorize(actor, Action.users_delete)
+    await authorize_db(actor, Action.users_delete, db)
     target = await _get_target(user_id, db)
     if target.id == actor.id:
         raise HTTPException(status_code=409, detail="You cannot delete your own account")
     await UserRepository.soft_delete(target, datetime.now(timezone.utc), db)
     await RefreshTokenRepository.revoke_all_for_user(target.id, db)
+    await record_audit_log(actor.id, Action.users_delete, "user", target.id, None, db)
     await db.commit()

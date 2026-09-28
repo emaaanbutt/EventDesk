@@ -17,7 +17,8 @@ from app.repositories.event_repository import EventRepository
 from app.realtime.publisher import publish_event_availability
 from app.schemas.events import EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
 from app.services import notification_service
-from app.services.authorization_service import authorize
+from app.services.audit_log_service import record_audit_log
+from app.services.authorization_service import authorize_db
 
 
 def _require_available(actor: User) -> None:
@@ -85,7 +86,7 @@ def _to_response(event: Event) -> EventResponse:
 
 async def create_event(actor: User, payload: EventCreate, db: AsyncSession) -> EventResponse:
     _require_available(actor)
-    authorize(actor, Action.events_create)
+    await authorize_db(actor, Action.events_create, db)
     if payload.starts_at <= datetime.now(timezone.utc):
         raise HTTPException(status_code=422, detail="Event start time must be in the future")
 
@@ -95,6 +96,7 @@ async def create_event(actor: User, payload: EventCreate, db: AsyncSession) -> E
 
     try:
         event = await EventRepository.create_event(values, actor.id, EventStatus.draft, tags, db)
+        await record_audit_log(actor.id, Action.events_create, "event", event.id, None, db)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -108,7 +110,7 @@ async def update_event(
 ) -> EventResponse:
     _require_available(actor)
     event = await _get_event_for_change_or_404(event_id, db)
-    authorize(actor, Action.events_edit, owner_id=event.organizer_id)
+    await authorize_db(actor, Action.events_edit, db, owner_id=event.organizer_id)
     _ensure_editable(event)
 
     changes = payload.model_dump(exclude_unset=True, exclude={"tag_ids"})
@@ -132,6 +134,14 @@ async def update_event(
 
     try:
         event = await EventRepository.update_event(event, changes, tags, db)
+        changed_fields = list(changes)
+        if tags is not None:
+            changed_fields.append("tag_ids")
+        if changed_fields:
+            await record_audit_log(
+                actor.id, Action.events_edit, "event", event.id,
+                {"fields": sorted(changed_fields)}, db,
+            )
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -144,11 +154,12 @@ async def update_event(
 async def publish_event(actor: User, event_id: UUID, db: AsyncSession) -> EventResponse:
     _require_available(actor)
     event = await _get_event_for_change_or_404(event_id, db)
-    authorize(actor, Action.events_publish, owner_id=event.organizer_id)
+    await authorize_db(actor, Action.events_publish, db, owner_id=event.organizer_id)
     _ensure_publishable(event)
 
     try:
         await EventRepository.set_status(event, EventStatus.published, db)
+        await record_audit_log(actor.id, Action.events_publish, "event", event.id, None, db)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -159,11 +170,12 @@ async def publish_event(actor: User, event_id: UUID, db: AsyncSession) -> EventR
 async def complete_event(actor: User, event_id: UUID, db: AsyncSession) -> EventResponse:
     _require_available(actor)
     event = await _get_event_for_change_or_404(event_id, db)
-    authorize(actor, Action.events_complete, owner_id=event.organizer_id)
+    await authorize_db(actor, Action.events_complete, db, owner_id=event.organizer_id)
     _ensure_completable(event)
 
     try:
         await EventRepository.set_status(event, EventStatus.completed, db)
+        await record_audit_log(actor.id, Action.events_complete, "event", event.id, None, db)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -172,9 +184,13 @@ async def complete_event(actor: User, event_id: UUID, db: AsyncSession) -> Event
 
 
 async def complete_due_events(db: AsyncSession) -> int:
-    count = await EventRepository.mark_due_events_completed(datetime.now(timezone.utc), db)
+    event_ids = await EventRepository.mark_due_events_completed(datetime.now(timezone.utc), db)
+    for event_id in event_ids:
+        await record_audit_log(
+            None, Action.events_complete, "event", event_id, {"source": "scheduler"}, db
+        )
     await db.commit()
-    return count
+    return len(event_ids)
 
 
 async def cancel_event(
@@ -182,12 +198,13 @@ async def cancel_event(
 ) -> EventResponse:
     _require_available(actor)
     event = await _get_event_for_change_or_404(event_id, db)
-    authorize(actor, Action.events_cancel, owner_id=event.organizer_id)
+    await authorize_db(actor, Action.events_cancel, db, owner_id=event.organizer_id)
     _ensure_cancellable(event)
 
     try:
         attendee_ids = await BookingRepository.get_confirmed_attendee_ids(event.id, db)
         await EventRepository.set_status(event, EventStatus.cancelled, db)
+        await record_audit_log(actor.id, Action.events_cancel, "event", event.id, None, db)
         response = _to_response(event)
         await db.commit()
     except IntegrityError:
@@ -227,7 +244,7 @@ async def get_published_event(event_id: UUID, db: AsyncSession) -> EventResponse
 
 async def get_my_events(actor: User, db: AsyncSession) -> list[EventResponse]:
     _require_available(actor)
-    authorize(actor, Action.events_view_own)
+    await authorize_db(actor, Action.events_view_own, db)
     events = await EventRepository.list_by_organizer(actor.id, db)
     return [_to_response(event) for event in events]
 
@@ -235,7 +252,7 @@ async def get_my_events(actor: User, db: AsyncSession) -> list[EventResponse]:
 async def get_managed_event(actor: User, event_id: UUID, db: AsyncSession) -> EventResponse:
     _require_available(actor)
     event = await _get_event_or_404(event_id, db)
-    authorize(actor, Action.events_edit, owner_id=event.organizer_id)
+    await authorize_db(actor, Action.events_edit, db, owner_id=event.organizer_id)
     return _to_response(event)
 
 
