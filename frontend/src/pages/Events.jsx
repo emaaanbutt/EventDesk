@@ -75,6 +75,10 @@ export function EventsPage() {
   const [catalog, setCatalog] = useState({ categories: [], tags: [] });
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  const dateError = filters.date_from && filters.date_to && filters.date_from > filters.date_to
+    ? "From date must be on or before To date."
+    : "";
   useEffect(() => {
     Promise.all([
       api("/categories", { auth: false }),
@@ -84,8 +88,13 @@ export function EventsPage() {
       .catch((err) => setError(err.message));
   }, []);
   useEffect(() => {
+    const timer = window.setInterval(() => setRefresh((value) => value + 1), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+  useEffect(() => {
     let active = true;
     setError("");
+    if (dateError) return;
     const params = {
       ...filters,
       date_from: filters.date_from
@@ -105,7 +114,7 @@ export function EventsPage() {
     return () => {
       active = false;
     };
-  }, [filters]);
+  }, [filters, dateError, refresh]);
   const update = (key, value) =>
     setFilters((old) => ({ ...old, [key]: value, page: 1 }));
   return (
@@ -175,8 +184,8 @@ export function EventsPage() {
           />
         </label>
       </div>
-      <Alert message={error} />
-      {!result ? (
+      <Alert message={dateError || error} />
+      {dateError || (!result && error) ? null : !result ? (
         <Busy />
       ) : result.items.length ? (
         <>
@@ -203,11 +212,16 @@ export function EventsPage() {
 export function MyEventsPage() {
   const [events, setEvents] = useState(null);
   const [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setRefresh((value) => value + 1), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     api("/events/mine")
-      .then(setEvents)
+      .then((data) => { setEvents(data); setError(""); })
       .catch((err) => setError(err.message));
-  }, []);
+  }, [refresh]);
   return (
     <>
       <PageHeading
@@ -281,24 +295,33 @@ export function EventFormPage() {
   async function submit(e) {
     e.preventDefault();
     setError("");
-    setBusy(true);
     const form = new FormData(e.currentTarget);
+    const start = new Date(form.get("starts_at"));
+    const end = new Date(form.get("ends_at"));
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      setError("Enter a valid start and end date and time.");
+      return;
+    }
+    if (start <= new Date()) {
+      setError("Choose a start date and time in the future.");
+      return;
+    }
+    if (end <= start) {
+      setError("End date and time must be after the start date and time.");
+      return;
+    }
+    setBusy(true);
     const body = {
       title: form.get("title"),
       description: form.get("description"),
       venue: form.get("venue"),
-      starts_at: new Date(form.get("starts_at")).toISOString(),
-      ends_at: new Date(form.get("ends_at")).toISOString(),
+      starts_at: start.toISOString(),
+      ends_at: end.toISOString(),
       ticket_price: form.get("ticket_price"),
       total_tickets: Number(form.get("total_tickets")),
       category_id: form.get("category_id") || null,
       tag_ids: selectedTags,
     };
-    if (new Date(body.ends_at) <= new Date(body.starts_at)) {
-      setError("End time must be after start time.");
-      setBusy(false);
-      return;
-    }
     try {
       const saved = await api(isEdit ? `/events/${id}` : "/events/", {
         method: isEdit ? "PATCH" : "POST",
@@ -450,10 +473,13 @@ export function EventDetailPage() {
   const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [availability, setAvailability] = useState(null);
+  const [availabilityError, setAvailabilityError] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState("");
+  const [reload, setReload] = useState(0);
+  const [now, setNow] = useState(Date.now());
   useEffect(() => {
     let active = true;
     setError("");
@@ -481,16 +507,20 @@ export function EventDetailPage() {
     return () => {
       active = false;
     };
-  }, [id, user?.id]);
+  }, [id, user?.id, reload]);
   useEffect(() => {
     if (!event || !["published", "completed", "cancelled"].includes(event.status)) return;
     let active = true;
-    if (event.status === "published") {
+    setAvailability(null);
+    setAvailabilityError("");
+    if (["published", "completed"].includes(event.status)) {
       api(`/events/${id}/availability`, { auth: false })
         .then((data) => {
           if (active) setAvailability(data);
         })
-        .catch(() => {});
+        .catch(() => {
+          if (active) setAvailabilityError("Ticket information is unavailable. Please try again later.");
+        });
     }
     const socket = openSocket(`/ws/events/${id}`);
     socket.onmessage = (message) => {
@@ -498,7 +528,7 @@ export function EventDetailPage() {
       if (active && update.type === "event.availability")
         setAvailability(update.data);
       if (active && update.type === "event.unavailable")
-        setNotice("This event is no longer available.");
+        setReload((value) => value + 1);
       if (active && update.type === "review.reply.created")
         window.dispatchEvent(
           new CustomEvent("eventdesk:review-reply", {
@@ -511,6 +541,15 @@ export function EventDetailPage() {
       socket.close();
     };
   }, [id, event?.status]);
+  useEffect(() => {
+    if (event?.status !== "published") return;
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+      if (new Date(event.ends_at) <= new Date())
+        setReload((value) => value + 1);
+    }, 30000);
+    return () => window.clearInterval(timer);
+  }, [event?.status, event?.ends_at]);
   async function act(path, message) {
     setBusy(true);
     setError("");
@@ -547,8 +586,12 @@ export function EventDetailPage() {
         body: { event_id: id, quantity: Number(quantity) },
       });
       setNotice("Booking confirmed. You can find it under My bookings.");
-      const next = await api(`/events/${id}/availability`, { auth: false });
-      setAvailability(next);
+      try {
+        const next = await api(`/events/${id}/availability`, { auth: false });
+        setAvailability(next);
+      } catch {
+        setReload((value) => value + 1);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -565,11 +608,12 @@ export function EventDetailPage() {
   const canManage =
     user && (user.id === event.organizer_id || user.role === "admin");
   const isOwnEvent = user?.id === event.organizer_id;
+  const bookingClosed = new Date(event.starts_at).getTime() <= now;
   const canBook =
     event.status === "published" &&
     user &&
     !isOwnEvent &&
-    new Date(event.starts_at) > new Date();
+    !bookingClosed;
   return (
     <div className="detail-page">
       <Link to="/events" className="back-link">
@@ -671,17 +715,21 @@ export function EventDetailPage() {
                 <dd>{event.venue}</dd>
               </div>
               <div>
-                <dt>Availability</dt>
+                <dt>{event.status === "completed" ? "Tickets booked" : "Availability"}</dt>
                 <dd>
-                  {availability
-                    ? `${availability.remaining_tickets} of ${availability.total_tickets} left`
-                    : event.status === "published"
-                      ? "Checking…"
-                      : "Not on sale"}
+                  {event.status === "completed"
+                    ? availability ? `${availability.booked_tickets} ticket${availability.booked_tickets === 1 ? "" : "s"}` : availabilityError || "Checking…"
+                    : event.status === "published" && bookingClosed
+                      ? "Booking closed"
+                      : availability && event.status === "published"
+                        ? `${availability.remaining_tickets} of ${availability.total_tickets} left`
+                        : event.status === "published"
+                          ? availabilityError || "Checking…"
+                          : "Not on sale"}
                 </dd>
               </div>
             </dl>
-            {canBook && (availability?.remaining_tickets ?? 1) > 0 && (
+            {canBook && availability?.remaining_tickets > 0 && (
               <form onSubmit={book}>
                 <Field label="Tickets">
                   <input
@@ -698,15 +746,21 @@ export function EventDetailPage() {
                 </button>
               </form>
             )}
-            {isOwnEvent && event.status === "published" && (
+            {event.status === "completed" && (
+              <p className="muted">This event has ended. Booking is closed.</p>
+            )}
+            {event.status === "published" && bookingClosed && (
+              <p className="muted">Booking has closed for this event.</p>
+            )}
+            {isOwnEvent && event.status === "published" && !bookingClosed && (
               <p className="muted">You can't book your own event.</p>
             )}
-            {!user && event.status === "published" && (
+            {!user && event.status === "published" && !bookingClosed && availability?.remaining_tickets > 0 && (
               <Link className="button primary full" to="/login">
                 Sign in to book
               </Link>
             )}
-            {availability?.remaining_tickets === 0 && (
+            {event.status === "published" && !bookingClosed && availability?.remaining_tickets === 0 && (
               <p className="muted">Sold out for now.</p>
             )}
           </div>
