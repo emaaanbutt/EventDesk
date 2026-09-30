@@ -54,6 +54,12 @@ function EventsAdmin() {
   const [page, setPage] = useState(1);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setRefresh((value) => value + 1), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -63,7 +69,7 @@ function EventsAdmin() {
       .then((data) => { if (active) setResult(data); })
       .catch((err) => { if (active) setError(err.message); });
     return () => { active = false; };
-  }, [search, status, page]);
+  }, [search, status, page, refresh]);
 
   return (
     <>
