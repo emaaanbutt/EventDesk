@@ -4,6 +4,16 @@ import { useAuth } from "../auth/AuthContext";
 import { api, setTokens } from "../lib/api";
 import { Alert, Field, PageHeading } from "../components/UI";
 
+function passwordMessage(value) {
+  if (!value) return "Enter a password.";
+  if (value.length < 8) return "Use at least 8 characters.";
+  if (new TextEncoder().encode(value).length > 72) return "Use no more than 72 bytes.";
+  if (!/[A-Z]/.test(value)) return "Add at least one uppercase letter.";
+  if (!/\d/.test(value)) return "Add at least one number.";
+  if (!/[!@#$%^&*(),.?":{}|<>_+-]/.test(value)) return "Add at least one special character.";
+  return "";
+}
+
 export function LoginPage() {
   const { user, signIn } = useAuth();
   const navigate = useNavigate();
@@ -38,7 +48,7 @@ export function LoginPage() {
           Explore events, keep your bookings close, and never miss an update.
         </p>
       </div>
-      <form className="card auth-card" onSubmit={submit}>
+      <form className="card auth-card" onSubmit={submit} onInput={() => setError("")}>
         <h2>Sign in</h2>
         <p className="muted">Welcome back to EventDesk.</p>
         <Alert message={error} />
@@ -69,6 +79,8 @@ export function RegisterPage() {
   const { user, register } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const [busy, setBusy] = useState(false);
   if (user) return <Navigate to="/events" replace />;
   async function submit(event) {
@@ -77,8 +89,11 @@ export function RegisterPage() {
     setError("");
     const data = new FormData(event.currentTarget);
     const password = data.get("password");
-    if (password !== data.get("confirm_password")) {
-      setError("Passwords do not match.");
+    const nextPasswordError = passwordMessage(password);
+    const nextConfirmError = password !== data.get("confirm_password") ? "Passwords do not match." : "";
+    setPasswordError(nextPasswordError);
+    setConfirmError(nextConfirmError);
+    if (nextPasswordError || nextConfirmError) {
       setBusy(false);
       return;
     }
@@ -92,6 +107,7 @@ export function RegisterPage() {
       navigate("/events");
     } catch (err) {
       setError(err.message);
+      if (err.fieldErrors?.password) setPasswordError(err.fieldErrors.password);
     } finally {
       setBusy(false);
     }
@@ -110,7 +126,7 @@ export function RegisterPage() {
           your own.
         </p>
       </div>
-      <form className="card auth-card" onSubmit={submit}>
+      <form className="card auth-card" onSubmit={submit} onInput={() => setError("")}>
         <h2>Create account</h2>
         <p className="muted">A few details and you’re ready to go.</p>
         <Alert message={error} />
@@ -132,6 +148,7 @@ export function RegisterPage() {
         <Field
           label="Password"
           hint="At least 8 characters, an uppercase letter, a number, and a special character."
+          error={passwordError || undefined}
         >
           <input
             type="password"
@@ -140,14 +157,20 @@ export function RegisterPage() {
             maxLength="72"
             required
             autoComplete="new-password"
+            onInput={(e) => {
+              setPasswordError(passwordMessage(e.currentTarget.value));
+              const confirmation = e.currentTarget.form.elements.confirm_password.value;
+              if (confirmation) setConfirmError(confirmation === e.currentTarget.value ? "" : "Passwords do not match.");
+            }}
           />
         </Field>
-        <Field label="Confirm password">
+        <Field label="Confirm password" error={confirmError || undefined}>
           <input
             type="password"
             name="confirm_password"
             required
             autoComplete="new-password"
+            onInput={(e) => setConfirmError(!e.currentTarget.value || e.currentTarget.value === e.currentTarget.form.elements.password.value ? "" : "Passwords do not match.")}
           />
         </Field>
         <button className="button primary full" disabled={busy}>
@@ -166,6 +189,8 @@ export function ProfilePage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const [busy, setBusy] = useState(false);
   async function saveProfile(event) {
     event.preventDefault();
@@ -193,8 +218,11 @@ export function ProfilePage() {
     setBusy(true);
     const form = event.currentTarget;
     const data = new FormData(form);
-    if (data.get("new_password") !== data.get("confirm_password")) {
-      setError("New passwords do not match.");
+    const nextPasswordError = passwordMessage(data.get("new_password"));
+    const nextConfirmError = data.get("new_password") !== data.get("confirm_password") ? "New passwords do not match." : "";
+    setPasswordError(nextPasswordError);
+    setConfirmError(nextConfirmError);
+    if (nextPasswordError || nextConfirmError) {
       setBusy(false);
       return;
     }
@@ -213,6 +241,7 @@ export function ProfilePage() {
       });
     } catch (err) {
       setError(err.message);
+      if (err.fieldErrors?.new_password) setPasswordError(err.fieldErrors.new_password);
     } finally {
       setBusy(false);
     }
@@ -227,7 +256,7 @@ export function ProfilePage() {
       <Alert message={error} />
       <Alert message={success} kind="success" />
       <div className="stack">
-        <form className="card form-card" onSubmit={saveProfile}>
+        <form className="card form-card" onSubmit={saveProfile} onInput={() => setError("")}>
           <h2>Your details</h2>
           <Field label="Name">
             <input
@@ -249,7 +278,7 @@ export function ProfilePage() {
             Save changes
           </button>
         </form>
-        <form className="card form-card" onSubmit={changePassword}>
+        <form className="card form-card" onSubmit={changePassword} onInput={() => setError("")}>
           <h2>Change password</h2>
           <Field label="Current password">
             <input type="password" name="current_password" required />
@@ -257,6 +286,7 @@ export function ProfilePage() {
           <Field
             label="New password"
             hint="8+ characters, uppercase, number, special character."
+            error={passwordError || undefined}
           >
             <input
               type="password"
@@ -264,10 +294,15 @@ export function ProfilePage() {
               required
               minLength="8"
               maxLength="72"
+              onInput={(e) => {
+                setPasswordError(passwordMessage(e.currentTarget.value));
+                const confirmation = e.currentTarget.form.elements.confirm_password.value;
+                if (confirmation) setConfirmError(confirmation === e.currentTarget.value ? "" : "New passwords do not match.");
+              }}
             />
           </Field>
-          <Field label="Confirm new password">
-            <input type="password" name="confirm_password" required />
+          <Field label="Confirm new password" error={confirmError || undefined}>
+            <input type="password" name="confirm_password" required onInput={(e) => setConfirmError(!e.currentTarget.value || e.currentTarget.value === e.currentTarget.form.elements.new_password.value ? "" : "New passwords do not match.")} />
           </Field>
           <button className="button secondary" disabled={busy}>
             Update password

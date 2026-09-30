@@ -85,7 +85,7 @@ export function BookingsPage() {
       <Alert message={notice} kind="success" />
       {!result && !error ? (
         <Busy />
-      ) : result?.items.length ? (
+      ) : !result ? null : result.items.length ? (
         <>
           <div className="card table-wrap">
             <table>
@@ -155,9 +155,9 @@ export function BookingsPage() {
         </>
       ) : (
         <Empty
-          title="No bookings yet"
-          detail="Find an event you like and book your spot."
-          action={
+          title={all ? "No bookings found" : "No bookings yet"}
+          detail={all ? "Bookings will appear here once someone reserves a ticket." : "Find an event you like and book your spot."}
+          action={!all &&
             <Link to="/events" className="button primary">
               Explore events
             </Link>

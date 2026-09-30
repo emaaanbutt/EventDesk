@@ -86,7 +86,7 @@ export function NotificationsPage() {
       <Alert message={error} />
       {!result && !error ? (
         <Busy />
-      ) : result?.items.length ? (
+      ) : !result ? null : result.items.length ? (
         <>
           <div className="notification-list">
             {result.items.map((item) => (

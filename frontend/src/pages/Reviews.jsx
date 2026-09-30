@@ -295,7 +295,7 @@ export function Reviews({ eventId, event }) {
       )}
       {!result && !error ? (
         <Busy />
-      ) : result?.items.length ? (
+      ) : !result ? null : result.items.length ? (
         <>
           <div className="review-list">
             {result.items.map((review) => (
