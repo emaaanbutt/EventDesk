@@ -278,9 +278,9 @@ async def list_all_events(actor: User, filters: AdminEventFilters, db: AsyncSess
     )
 
 
-async def get_published_event(event_id: UUID, db: AsyncSession) -> EventResponse:
+async def get_public_event(event_id: UUID, db: AsyncSession) -> EventResponse:
     event = await _get_event_or_404(event_id, db)
-    if event.status != EventStatus.published:
+    if event.status not in (EventStatus.published, EventStatus.completed):
         raise HTTPException(status_code=404, detail="Event not found")
     return _to_response(event)
 
@@ -309,7 +309,7 @@ async def get_managed_event(actor: User, event_id: UUID, db: AsyncSession) -> Ev
 
 async def get_event_availability(event_id: UUID, db: AsyncSession) -> EventAvailabilityResponse:
     event = await _get_event_or_404(event_id, db)
-    if event.status != EventStatus.published:
+    if event.status not in (EventStatus.published, EventStatus.completed):
         raise HTTPException(status_code=404, detail="Event not found")
     total_seats = event.total_tickets
     booked_seats = await BookingRepository.get_confirmed_ticket_count(event_id, db)

@@ -17,6 +17,69 @@ import {
 } from "../components/UI";
 import { Reviews } from "./Reviews";
 
+function parseLocalDate(value, withTime = false) {
+  const match = withTime
+    ? /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value)
+    : /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+  const [, year, month, day, hour = 0, minute = 0] = match.map(Number);
+  if (year < 1000) return null;
+  const date = new Date(year, month - 1, day, hour, minute);
+  const matches = date.getFullYear() === year &&
+    date.getMonth() === month - 1 && date.getDate() === day &&
+    date.getHours() === hour && date.getMinutes() === minute;
+  return matches ? date : null;
+}
+
+function eventInputErrors(form) {
+  const titleValue = form.elements.title.value.trim();
+  const venueValue = form.elements.venue.value.trim();
+  const descriptionValue = form.elements.description.value.trim();
+  const startValue = form.elements.starts_at.value;
+  const endValue = form.elements.ends_at.value;
+  const priceValue = form.elements.ticket_price.value;
+  const ticketsValue = form.elements.total_tickets.value;
+  const start = parseLocalDate(startValue, true);
+  const end = parseLocalDate(endValue, true);
+  const price = Number(priceValue);
+  const tickets = Number(ticketsValue);
+  let starts_at = "";
+  let ends_at = "";
+  let ticket_price = "";
+  let total_tickets = "";
+
+  if (form.elements.starts_at.validity?.badInput) starts_at = "Enter a valid start date and time with a four-digit year.";
+  else if (!startValue) starts_at = "Choose a start date and time.";
+  else if (!start) starts_at = "Enter a valid start date and time with a four-digit year.";
+  else if (start <= new Date()) starts_at = "Choose a start date and time in the future.";
+
+  if (form.elements.ends_at.validity?.badInput) ends_at = "Enter a valid end date and time with a four-digit year.";
+  else if (!endValue) ends_at = "Choose an end date and time.";
+  else if (!end) ends_at = "Enter a valid end date and time with a four-digit year.";
+  else if (start && end <= start) ends_at = "End date and time must be later than the start.";
+
+  if (form.elements.ticket_price.validity?.badInput) ticket_price = "Enter a valid ticket price.";
+  else if (priceValue === "") ticket_price = "Enter a ticket price.";
+  else if (!Number.isFinite(price)) ticket_price = "Enter a valid ticket price.";
+  else if (price < 0) ticket_price = "Ticket price cannot be negative.";
+  else if (!/^\d+(?:\.\d{1,2})?$/.test(priceValue)) ticket_price = "Use no more than two decimal places.";
+  else if (price > 99999999.99) ticket_price = "Ticket price must be below PKR 100,000,000.";
+
+  if (form.elements.total_tickets.validity?.badInput) total_tickets = "Enter a whole number of tickets.";
+  else if (ticketsValue === "") total_tickets = "Enter the number of tickets.";
+  else if (!Number.isInteger(tickets) || tickets < 1) total_tickets = "Enter at least one whole ticket.";
+
+  return {
+    title: titleValue ? "" : "Enter an event title.",
+    venue: venueValue ? "" : "Enter a venue.",
+    description: descriptionValue ? "" : "Enter a description.",
+    starts_at,
+    ends_at,
+    ticket_price,
+    total_tickets,
+  };
+}
+
 export function HomePage() {
   return (
     <>
@@ -76,9 +139,12 @@ export function EventsPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
-  const dateError = filters.date_from && filters.date_to && filters.date_from > filters.date_to
-    ? "From date must be on or before To date."
-    : "";
+  const [filterInputError, setFilterInputError] = useState("");
+  const dateError = filterInputError ||
+    (filters.date_from && !parseLocalDate(filters.date_from) ? "Enter a valid From date with a four-digit year." : "") ||
+    (filters.date_to && !parseLocalDate(filters.date_to) ? "Enter a valid To date with a four-digit year." : "") ||
+    (filters.date_from && filters.date_to && filters.date_from > filters.date_to ? "From date must be on or before To date." : "");
+  const hasFilters = Boolean(filters.search.trim() || filters.category_id || filters.tag_id || filters.date_from || filters.date_to);
   useEffect(() => {
     Promise.all([
       api("/categories", { auth: false }),
@@ -97,6 +163,7 @@ export function EventsPage() {
     if (dateError) return;
     const params = {
       ...filters,
+      search: filters.search.trim(),
       date_from: filters.date_from
         ? new Date(`${filters.date_from}T00:00:00`).toISOString()
         : "",
@@ -115,8 +182,15 @@ export function EventsPage() {
       active = false;
     };
   }, [filters, dateError, refresh]);
-  const update = (key, value) =>
+  const update = (key, value) => {
+    setResult(null);
     setFilters((old) => ({ ...old, [key]: value, page: 1 }));
+  };
+  const clearFilters = () => {
+    setFilterInputError("");
+    setResult(null);
+    setFilters((old) => ({ ...old, search: "", category_id: "", tag_id: "", date_from: "", date_to: "", page: 1 }));
+  };
   return (
     <>
       <PageHeading
@@ -129,6 +203,7 @@ export function EventsPage() {
           aria-label="Search events"
           placeholder="Search by title or venue…"
           value={filters.search}
+          maxLength={100}
           onChange={(e) => update("search", e.target.value)}
         />
         <select
@@ -171,6 +246,9 @@ export function EventsPage() {
             type="date"
             value={filters.date_from}
             max={filters.date_to || undefined}
+            aria-invalid={Boolean(dateError)}
+            aria-describedby={dateError ? "event-filter-error" : undefined}
+            onInput={(e) => setFilterInputError(e.currentTarget.validity.badInput ? "Enter a valid date with a four-digit year." : "")}
             onChange={(e) => update("date_from", e.target.value)}
           />
         </label>
@@ -180,11 +258,20 @@ export function EventsPage() {
             type="date"
             value={filters.date_to}
             min={filters.date_from || undefined}
+            aria-invalid={Boolean(dateError)}
+            aria-describedby={dateError ? "event-filter-error" : undefined}
+            onInput={(e) => setFilterInputError(e.currentTarget.validity.badInput ? "Enter a valid date with a four-digit year." : "")}
             onChange={(e) => update("date_to", e.target.value)}
           />
         </label>
       </div>
-      <Alert message={dateError || error} />
+      {dateError && (
+        <p id="event-filter-error" className="filter-error" role="status">
+          {dateError}{" "}
+          <button type="button" className="text-button" onClick={clearFilters}>Clear filters</button>
+        </p>
+      )}
+      <Alert message={error} />
       {dateError || (!result && error) ? null : !result ? (
         <Busy />
       ) : result.items.length ? (
@@ -203,7 +290,11 @@ export function EventsPage() {
           />
         </>
       ) : (
-        <Empty title="No events found" detail="Try another search or filter." />
+        <Empty
+          title={hasFilters ? "No events match these filters" : "No upcoming events yet"}
+          detail={hasFilters ? "Try a different date, category, or search term." : "Check back soon for new events."}
+          action={hasFilters && <button className="button secondary" onClick={clearFilters}>Clear filters</button>}
+        />
       )}
     </>
   );
@@ -237,7 +328,7 @@ export function MyEventsPage() {
       <Alert message={error} />
       {!events && !error ? (
         <Busy />
-      ) : events?.length ? (
+      ) : !events ? null : events.length ? (
         <div className="event-grid">
           {events.map((event) => (
             <EventCard key={event.id} event={event} />
@@ -275,6 +366,7 @@ export function EventFormPage() {
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     Promise.all([
@@ -288,28 +380,42 @@ export function EventFormPage() {
         if (current) {
           setEvent(current);
           setSelectedTags(current.tags.map((tag) => tag.id));
+          setFieldErrors({});
         }
       })
       .catch((err) => setError(err.message));
   }, [id, isEdit]);
+  function updateFieldFeedback(e) {
+    const form = e.currentTarget;
+    const name = e.target.name;
+    setError("");
+    if (name === "category_id") {
+      setFieldErrors((current) => ({ ...current, category_id: "" }));
+      return;
+    }
+    if (!["title", "venue", "description", "starts_at", "ends_at", "ticket_price", "total_tickets"].includes(name)) return;
+    const next = eventInputErrors(form);
+    setFieldErrors((current) => ({
+      ...current,
+      [name]: next[name],
+      ...(name === "starts_at" && form.elements.ends_at.value ? { ends_at: next.ends_at } : {}),
+      ...(name === "ends_at" && form.elements.starts_at.value ? { starts_at: next.starts_at } : {}),
+    }));
+  }
   async function submit(e) {
     e.preventDefault();
     setError("");
-    const form = new FormData(e.currentTarget);
-    const start = new Date(form.get("starts_at"));
-    const end = new Date(form.get("ends_at"));
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      setError("Enter a valid start and end date and time.");
+    const element = e.currentTarget;
+    const validation = eventInputErrors(element);
+    setFieldErrors(validation);
+    const firstInvalid = Object.keys(validation).find((name) => validation[name]);
+    if (firstInvalid) {
+      element.elements[firstInvalid].focus();
       return;
     }
-    if (start <= new Date()) {
-      setError("Choose a start date and time in the future.");
-      return;
-    }
-    if (end <= start) {
-      setError("End date and time must be after the start date and time.");
-      return;
-    }
+    const form = new FormData(element);
+    const start = parseLocalDate(form.get("starts_at"), true);
+    const end = parseLocalDate(form.get("ends_at"), true);
     setBusy(true);
     const body = {
       title: form.get("title"),
@@ -329,7 +435,12 @@ export function EventFormPage() {
       });
       navigate(`/events/${saved.id}`);
     } catch (err) {
-      setError(err.message);
+      if (err.fieldErrors && Object.keys(err.fieldErrors).length) {
+        setFieldErrors((current) => ({ ...current, ...err.fieldErrors }));
+        setError("Please check the highlighted fields and try again.");
+      } else {
+        setError(err.message);
+      }
     } finally {
       setBusy(false);
     }
@@ -342,16 +453,17 @@ export function EventFormPage() {
         description="Start with the details. New events are saved as drafts."
       />
       <Alert message={error} />
-      {isEdit && !event && !error ? (
-        <Busy />
+      {isEdit && !event ? (
+        !error && <Busy />
       ) : (
         <form
           className="card form-card"
           onSubmit={submit}
+          onInput={updateFieldFeedback}
           key={event?.id || "new"}
         >
           <div className="form-grid">
-            <Field label="Title">
+            <Field label="Title" error={fieldErrors.title}>
               <input
                 name="title"
                 defaultValue={event?.title}
@@ -359,7 +471,7 @@ export function EventFormPage() {
                 maxLength="255"
               />
             </Field>
-            <Field label="Venue">
+            <Field label="Venue" error={fieldErrors.venue}>
               <input
                 name="venue"
                 defaultValue={event?.venue}
@@ -367,7 +479,7 @@ export function EventFormPage() {
                 maxLength="255"
               />
             </Field>
-            <Field label="Starts at">
+            <Field label="Starts at" error={fieldErrors.starts_at}>
               <input
                 type="datetime-local"
                 name="starts_at"
@@ -375,7 +487,7 @@ export function EventFormPage() {
                 required
               />
             </Field>
-            <Field label="Ends at">
+            <Field label="Ends at" error={fieldErrors.ends_at}>
               <input
                 type="datetime-local"
                 name="ends_at"
@@ -383,7 +495,7 @@ export function EventFormPage() {
                 required
               />
             </Field>
-            <Field label="Ticket price (PKR)">
+            <Field label="Ticket price (PKR)" error={fieldErrors.ticket_price}>
               <input
                 type="number"
                 name="ticket_price"
@@ -393,7 +505,7 @@ export function EventFormPage() {
                 required
               />
             </Field>
-            <Field label="Total tickets">
+            <Field label="Total tickets" error={fieldErrors.total_tickets}>
               <input
                 type="number"
                 name="total_tickets"
@@ -403,7 +515,7 @@ export function EventFormPage() {
                 required
               />
             </Field>
-            <Field label="Category">
+            <Field label="Category" error={fieldErrors.category_id}>
               <select
                 name="category_id"
                 defaultValue={event?.category_id || ""}
@@ -417,7 +529,7 @@ export function EventFormPage() {
               </select>
             </Field>
           </div>
-          <Field label="Description">
+          <Field label="Description" error={fieldErrors.description}>
             <textarea
               name="description"
               defaultValue={event?.description}
@@ -434,13 +546,15 @@ export function EventFormPage() {
                     <input
                       type="checkbox"
                       checked={selectedTags.includes(tag.id)}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setError("");
+                        setFieldErrors((current) => ({ ...current, tag_ids: "" }));
                         setSelectedTags((old) =>
                           e.target.checked
                             ? [...old, tag.id]
                             : old.filter((tagId) => tagId !== tag.id),
-                        )
-                      }
+                        );
+                      }}
                     />
                     {tag.name}
                   </label>
@@ -449,6 +563,7 @@ export function EventFormPage() {
                 <small>No tags yet.</small>
               )}
             </div>
+            {fieldErrors.tag_ids && <small className="field-error" role="status">{fieldErrors.tag_ids}</small>}
           </div>
           <div className="form-actions">
             <button className="button primary" disabled={busy}>
@@ -477,6 +592,7 @@ export function EventDetailPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [quantityBadInput, setQuantityBadInput] = useState(false);
   const [notice, setNotice] = useState("");
   const [reload, setReload] = useState(0);
   const [now, setNow] = useState(Date.now());
@@ -502,7 +618,10 @@ export function EventDetailPage() {
         if (active) setEvent(data);
       })
       .catch((err) => {
-        if (active) setError(err.message);
+        if (active) {
+          if (err.status === 404) setEvent(null);
+          setError(err.message);
+        }
       });
     return () => {
       active = false;
@@ -577,6 +696,7 @@ export function EventDetailPage() {
   }
   async function book(e) {
     e.preventDefault();
+    if (quantityError) return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -594,6 +714,11 @@ export function EventDetailPage() {
       }
     } catch (err) {
       setError(err.message);
+      if (err.status === 409) {
+        api(`/events/${id}/availability`, { auth: false })
+          .then(setAvailability)
+          .catch(() => setReload((value) => value + 1));
+      }
     } finally {
       setBusy(false);
     }
@@ -609,6 +734,10 @@ export function EventDetailPage() {
     user && (user.id === event.organizer_id || user.role === "admin");
   const isOwnEvent = user?.id === event.organizer_id;
   const bookingClosed = new Date(event.starts_at).getTime() <= now;
+  const quantityNumber = Number(quantity);
+  const quantityError = quantityBadInput ? "Enter a whole number of tickets." : quantity === "" ? "Enter how many tickets you want." :
+    !Number.isInteger(quantityNumber) || quantityNumber < 1 ? "Enter at least one whole ticket." :
+    availability && quantityNumber > availability.remaining_tickets ? `Only ${availability.remaining_tickets} ticket${availability.remaining_tickets === 1 ? " is" : "s are"} left.` : "";
   const canBook =
     event.status === "published" &&
     user &&
@@ -731,13 +860,13 @@ export function EventDetailPage() {
             </dl>
             {canBook && availability?.remaining_tickets > 0 && (
               <form onSubmit={book}>
-                <Field label="Tickets">
+                <Field label="Tickets" error={quantityError}>
                   <input
                     type="number"
                     min="1"
                     max={availability?.remaining_tickets || undefined}
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    onChange={(e) => { setQuantity(e.target.value); setQuantityBadInput(e.currentTarget.validity.badInput); setError(""); }}
                     required
                   />
                 </Field>

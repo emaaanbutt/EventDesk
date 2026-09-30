@@ -1,9 +1,14 @@
+import { cloneElement, isValidElement, useId, useState } from "react";
 import { Link } from "react-router-dom";
 
 export function Alert({ message, kind = "error" }) {
   return message ? (
-    <div role="alert" className={`alert ${kind}`}>
-      {message}
+    <div role={kind === "error" ? "alert" : "status"} className={`alert ${kind}`}>
+      <span className="alert-icon" aria-hidden="true">{kind === "error" ? "!" : "✓"}</span>
+      <div>
+        <strong>{kind === "error" ? "Something needs attention" : "All set"}</strong>
+        <span>{message}</span>
+      </div>
     </div>
   ) : null;
 }
@@ -15,6 +20,7 @@ export function Busy({ label = "Loading…" }) {
 export function Empty({ title, detail, action }) {
   return (
     <div className="empty">
+      <span className="empty-icon" aria-hidden="true">✦</span>
       <h3>{title}</h3>
       <p>{detail}</p>
       {action}
@@ -92,12 +98,49 @@ export function ConfirmButton({
   );
 }
 
-export function Field({ label, children, hint }) {
+function nativeMessage(input, label) {
+  const { validity, min, max, minLength, maxLength, type } = input;
+  if (validity.valueMissing) {
+    if (type === "select-one") return "Choose an option.";
+    if (label.toLowerCase().startsWith("confirm")) return "Confirm your password.";
+    return `Enter ${label.toLowerCase()}.`;
+  }
+  if (validity.badInput || validity.typeMismatch)
+    return type === "email" ? "Enter a valid email address." : `Enter a valid ${label.toLowerCase()}.`;
+  if (validity.rangeUnderflow)
+    return Number(min) === 0 ? `${label} cannot be negative.` : `${label} must be at least ${min}.`;
+  if (validity.rangeOverflow) return `${label} must be ${max} or less.`;
+  if (validity.stepMismatch)
+    return Number(input.step) === 1 ? `${label} must be a whole number.` : `${label} can have up to two decimal places.`;
+  if (validity.tooShort) return `${label} must be at least ${minLength} characters.`;
+  if (validity.tooLong) return `${label} must be ${maxLength} characters or fewer.`;
+  if (validity.patternMismatch) return `Enter a valid ${label.toLowerCase()}.`;
+  return "";
+}
+
+export function Field({ label, children, hint, error, validate }) {
+  const errorId = useId();
+  const [nativeError, setNativeError] = useState("");
+  const message = error === undefined ? nativeError : error;
+  const isControl = isValidElement(children) && ["input", "select", "textarea"].includes(children.type);
+  const control = isControl ? cloneElement(children, {
+    "aria-invalid": Boolean(message),
+    "aria-describedby": [children.props["aria-describedby"], message ? errorId : null].filter(Boolean).join(" ") || undefined,
+    onInput: (event) => {
+      setNativeError(validate?.(event.currentTarget.value, event.currentTarget) || nativeMessage(event.currentTarget, label));
+      children.props.onInput?.(event);
+    },
+    onInvalid: (event) => {
+      event.preventDefault();
+      setNativeError(validate?.(event.currentTarget.value, event.currentTarget) || nativeMessage(event.currentTarget, label));
+      children.props.onInvalid?.(event);
+    },
+  }) : children;
   return (
-    <label className="field">
+    <label className={`field${message ? " field-invalid" : ""}`}>
       <span>{label}</span>
-      {children}
-      {hint && <small>{hint}</small>}
+      {control}
+      {message ? <small id={errorId} className="field-error">{message}</small> : hint && <small>{hint}</small>}
     </label>
   );
 }
