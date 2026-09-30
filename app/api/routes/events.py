@@ -49,11 +49,11 @@ async def list_all_events(
 
 
 @router.get("/{event_id}", response_model=EventResponse)
-async def get_published_event(
+async def get_public_event(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
 ) -> EventResponse:
-    return await event_service.get_published_event(event_id, db)
+    return await event_service.get_public_event(event_id, db)
 
 
 @router.get("/{event_id}/manage", response_model=EventResponse)
