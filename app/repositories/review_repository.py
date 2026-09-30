@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.reviews import Review
 
+
 class ReviewRepository:
     @staticmethod
     async def get_by_id(review_id: UUID, db: AsyncSession) -> Review | None:
@@ -21,10 +22,11 @@ class ReviewRepository:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_by_author_and_event(author_id: UUID, event_id: UUID, db: AsyncSession) -> Review | None:
+    async def get_by_author_and_event(
+        author_id: UUID, event_id: UUID, db: AsyncSession
+    ) -> Review | None:
         result = await db.execute(
-            select(Review)
-            .where(
+            select(Review).where(
                 Review.author_id == author_id,
                 Review.event_id == event_id,
                 Review.deleted_at.is_(None),
@@ -33,15 +35,11 @@ class ReviewRepository:
 
         return result.scalar_one_or_none()
 
-
     @staticmethod
-    async def create_review(event_id: UUID, author_id: UUID, rating: int, comment: str, db: AsyncSession) -> Review:
-        review = Review(
-            author_id = author_id,
-            event_id = event_id,
-            rating = rating,
-            comment = comment
-        )
+    async def create_review(
+        event_id: UUID, author_id: UUID, rating: int, comment: str, db: AsyncSession
+    ) -> Review:
+        review = Review(author_id=author_id, event_id=event_id, rating=rating, comment=comment)
         db.add(review)
         await db.flush()
         await db.refresh(review)
@@ -63,7 +61,9 @@ class ReviewRepository:
         await db.flush()
 
     @staticmethod
-    async def list_reviews_for_event(event_id: UUID, page: int, page_size: int, db: AsyncSession) -> tuple[list[Review], int]:
+    async def list_reviews_for_event(
+        event_id: UUID, page: int, page_size: int, db: AsyncSession
+    ) -> tuple[list[Review], int]:
         conditions = (Review.event_id == event_id, Review.deleted_at.is_(None))
         count_result = await db.execute(select(func.count(Review.id)).where(*conditions))
         result = await db.execute(

@@ -4,10 +4,11 @@ import asyncio
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import HTTPException, WebSocket
+from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
-from app.db.session import AsyncSessionLocal
+from app.core.exceptions import NotFoundError
+from app.db.session import new_session
 from app.models.enums import EventStatus
 from app.realtime.auth import authenticate_notification_socket
 from app.realtime.manager import manager
@@ -20,18 +21,21 @@ async def watch_event(socket: WebSocket, event_id: UUID) -> None:
     try:
         async with room.lock:
             try:
-                async with AsyncSessionLocal() as db:
+                async with new_session() as db:
                     event = await EventRepository.get_by_id(event_id, db)
                     if event is None or event.status not in (
-                        EventStatus.published, EventStatus.completed, EventStatus.cancelled
+                        EventStatus.published,
+                        EventStatus.completed,
+                        EventStatus.cancelled,
                     ):
                         await socket.close(code=1008)
                         return
                     availability = (
                         await get_event_availability(event_id, db)
-                        if event.status == EventStatus.published else None
+                        if event.status == EventStatus.published
+                        else None
                     )
-            except HTTPException:
+            except NotFoundError:
                 await socket.close(code=1008)
                 return
             await socket.accept()

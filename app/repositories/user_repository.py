@@ -38,7 +38,9 @@ class UserRepository:
         return user
 
     @staticmethod
-    async def update_user(user_id: UUID | str, payload: UserUpdate, db: AsyncSession) -> User | None:
+    async def update_user(
+        user_id: UUID | str, payload: UserUpdate, db: AsyncSession
+    ) -> User | None:
         user = await UserRepository.get_by_id(user_id, db)
         if user is None:
             return None

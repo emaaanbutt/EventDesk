@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import BackgroundTasks
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ConflictError, NotFoundError, PermissionDeniedError
 from app.core.role_policy import Action
 from app.models.enums import NotificationCategory
 from app.models.events import Event
@@ -26,20 +27,20 @@ from app.services.authorization_service import authorize_db
 
 def _require_available(actor: User) -> None:
     if not actor.is_active or actor.deleted_at is not None:
-        raise HTTPException(status_code=403, detail="User account is unavailable")
+        raise PermissionDeniedError(detail="User account is unavailable")
 
 
 async def _get_event_or_404(event_id: UUID, db: AsyncSession) -> Event:
     event = await EventRepository.get_by_id(event_id, db)
     if event is None:
-        raise HTTPException(status_code=404, detail="Event not found")
+        raise NotFoundError(detail="Event not found")
     return event
 
 
 async def _get_review_or_404(review_id: UUID, db: AsyncSession) -> Review:
     review = await ReviewRepository.get_by_id(review_id, db)
     if review is None:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise NotFoundError(detail="Review not found")
     return review
 
 
@@ -50,22 +51,24 @@ async def create_review(
     await authorize_db(actor, Action.reviews_create, db)
     event = await _get_event_or_404(payload.event_id, db)
     if event.organizer_id == actor.id:
-        raise HTTPException(status_code=403, detail="You cannot review your own event")
+        raise PermissionDeniedError(detail="You cannot review your own event")
 
     if not await BookingRepository.has_confirmed_booking(event.id, actor.id, db):
-        raise HTTPException(status_code=403, detail="A confirmed booking is required to review this event")
+        raise PermissionDeniedError(detail="A confirmed booking is required to review this event")
     if await ReviewRepository.get_by_author_and_event(actor.id, event.id, db) is not None:
-        raise HTTPException(status_code=409, detail="You have already reviewed this event")
+        raise ConflictError(detail="You have already reviewed this event")
 
     try:
         review = await ReviewRepository.create_review(
             event.id, actor.id, payload.rating, payload.comment, db
         )
-        response = ReviewResponse.model_validate(review).model_copy(update={"author_name": actor.name})
+        response = ReviewResponse.model_validate(review).model_copy(
+            update={"author_name": actor.name}
+        )
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="Review could not be created") from None
+        raise ConflictError(detail="Review could not be created") from None
 
     if event.organizer_id != actor.id:
         background_tasks.add_task(
@@ -89,17 +92,19 @@ async def update_review(
     await authorize_db(actor, Action.reviews_edit, db, owner_id=review.author_id)
     event = await _get_event_or_404(review.event_id, db)
     if event.organizer_id == actor.id:
-        raise HTTPException(status_code=403, detail="You cannot review your own event")
+        raise PermissionDeniedError(detail="You cannot review your own event")
 
     try:
         review = await ReviewRepository.update_review(
             review, payload.model_dump(exclude_unset=True), db
         )
-        response = ReviewResponse.model_validate(review).model_copy(update={"author_name": review.author.name})
+        response = ReviewResponse.model_validate(review).model_copy(
+            update={"author_name": review.author.name}
+        )
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="Review could not be updated") from None
+        raise ConflictError(detail="Review could not be updated") from None
     return response
 
 
@@ -119,7 +124,9 @@ async def list_event_reviews(
     reviews, total = await ReviewRepository.list_reviews_for_event(event_id, page, page_size, db)
     return ReviewListResponse(
         items=[
-            ReviewResponse.model_validate(review).model_copy(update={"author_name": review.author.name})
+            ReviewResponse.model_validate(review).model_copy(
+                update={"author_name": review.author.name}
+            )
             for review in reviews
         ],
         total=total,

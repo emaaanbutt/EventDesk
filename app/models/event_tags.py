@@ -17,12 +17,14 @@ class EventTag(Base):
     __tablename__ = "event_tags"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), nullable=False)
-    tag_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tags.id", ondelete="CASCADE"), nullable=False)
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"), nullable=False
+    )
+    tag_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("tags.id", ondelete="CASCADE"), nullable=False
+    )
 
     __table_args__ = (UniqueConstraint("event_id", "tag_id", name="uq_event_tag"),)
 
     event: Mapped[Event] = relationship(back_populates="event_tags")
     tag: Mapped[Tag] = relationship(back_populates="event_tags")
-
-   

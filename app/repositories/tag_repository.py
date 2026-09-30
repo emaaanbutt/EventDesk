@@ -17,9 +17,7 @@ class TagRepository:
     @staticmethod
     async def list_all(db: AsyncSession) -> list[Tag]:
         result = await db.execute(
-            select(Tag)
-            .where(Tag.deleted_at.is_(None))
-            .order_by(Tag.name.asc(), Tag.id.asc())
+            select(Tag).where(Tag.deleted_at.is_(None)).order_by(Tag.name.asc(), Tag.id.asc())
         )
         return list(result.scalars().all())
 

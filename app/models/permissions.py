@@ -23,4 +23,3 @@ class Permission(Base, TimeStamp):
         back_populates="permission",
         cascade="all, delete-orphan",
     )
-   

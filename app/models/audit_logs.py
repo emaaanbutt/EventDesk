@@ -25,7 +25,8 @@ class AuditLog(Base):
     entity_type: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
     entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     details: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     actor: Mapped[User | None] = relationship(back_populates="audit_logs")
-   

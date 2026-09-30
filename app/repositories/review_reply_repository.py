@@ -11,7 +11,9 @@ from app.models.review_replies import ReviewReply
 
 class ReviewReplyRepository:
     @staticmethod
-    async def get_by_author(review_id: UUID, author_id: UUID, db: AsyncSession) -> ReviewReply | None:
+    async def get_by_author(
+        review_id: UUID, author_id: UUID, db: AsyncSession
+    ) -> ReviewReply | None:
         result = await db.execute(
             select(ReviewReply).where(
                 ReviewReply.review_id == review_id,
@@ -21,7 +23,9 @@ class ReviewReplyRepository:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def create(review_id: UUID, author_id: UUID, comment: str, db: AsyncSession) -> ReviewReply:
+    async def create(
+        review_id: UUID, author_id: UUID, comment: str, db: AsyncSession
+    ) -> ReviewReply:
         reply = ReviewReply(review_id=review_id, author_id=author_id, comment=comment)
         db.add(reply)
         await db.flush()

@@ -32,11 +32,13 @@ class BookingResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class BookingFilters(BaseModel):
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)
 
     model_config = ConfigDict(extra="forbid")
+
 
 class BookingListResponse(BaseModel):
     items: list[BookingResponse]

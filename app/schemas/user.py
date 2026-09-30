@@ -18,19 +18,11 @@ def validate_password_strength(value: str) -> str:
         raise ValueError("Password must contain at least one special character.")
     return value
 
+
 class UserBase(BaseModel):
-    name: str = Field(
-        ..., 
-        min_length=1, 
-        max_length=100, 
-        description="Full name of the user"
-    )
+    name: str = Field(..., min_length=1, max_length=100, description="Full name of the user")
 
-    email: EmailStr =  Field(
-        ...,
-        description="User email address."
-    )
-
+    email: EmailStr = Field(..., description="User email address.")
 
     @field_validator("email")
     def normalize_email(cls, value: str) -> str:
@@ -44,10 +36,10 @@ class UserBase(BaseModel):
     @field_validator("name")
     def normalize_name(cls, value: str) -> str:
         value = value.strip()
-    
+
         if not value:
             raise ValueError("Name cannot be empty.")
-    
+
         return value
 
     model_config = ConfigDict(
@@ -55,6 +47,7 @@ class UserBase(BaseModel):
         populate_by_name=True,
         extra="forbid",
     )
+
 
 class UserCreate(UserBase):
     password: str = Field(
@@ -67,14 +60,14 @@ class UserCreate(UserBase):
     role: Literal["organizer", "attendee"]
 
     @field_validator("password")
-    def validate_password(cls, value:str) -> str:
+    def validate_password(cls, value: str) -> str:
         return validate_password_strength(value)
 
     model_config = ConfigDict(
-            from_attributes=True,
-            populate_by_name=True,
-            extra="forbid",
-        )
+        from_attributes=True,
+        populate_by_name=True,
+        extra="forbid",
+    )
 
 
 class UserResponse(UserBase):
@@ -107,10 +100,7 @@ class UserUpdate(BaseModel):
 
         return value
 
-    model_config = ConfigDict(
-        extra="forbid"
-    )
-
+    model_config = ConfigDict(extra="forbid")
 
 
 class UserLogin(BaseModel):
@@ -126,6 +116,7 @@ class UserLogin(BaseModel):
         return value
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True, extra="forbid")
+
 
 class PasswordChange(BaseModel):
     current_password: str = Field(min_length=1)

@@ -13,6 +13,7 @@ from app.models.enums import BookingStatus, EventStatus
 from app.models.events import Event
 from app.models.users import User
 
+
 class BookingRepository:
     @staticmethod
     async def get_due_reminders_for_update(
@@ -94,9 +95,7 @@ class BookingRepository:
     @staticmethod
     async def get_event_id(booking_id: UUID, db: AsyncSession) -> UUID | None:
         result = await db.execute(
-            select(Booking.event_id).where(
-                Booking.id == booking_id, Booking.deleted_at.is_(None)
-            )
+            select(Booking.event_id).where(Booking.id == booking_id, Booking.deleted_at.is_(None))
         )
         return result.scalar_one_or_none()
 

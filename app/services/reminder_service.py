@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
+from app.core.config import get_settings
 from app.integrations.brevo import send_email
 from app.repositories.booking_repository import BookingRepository
 
@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 async def send_due_reminders(db: AsyncSession) -> int:
+    settings = get_settings()
+    if settings.EMAIL_BACKEND == "disabled":
+        logger.info("Email reminders are disabled by configuration")
+        return 0
     now = datetime.now(timezone.utc)
     cutoff = now + timedelta(hours=settings.REMINDER_HOURS_BEFORE)
     display_timezone = ZoneInfo(settings.REMINDER_TIMEZONE)

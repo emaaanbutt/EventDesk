@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
-from app.db.session import AsyncSessionLocal
+from app.db.session import new_session
 from app.models.users import User
 from app.repositories.user_repository import UserRepository
 
@@ -16,8 +16,12 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:
-    async with AsyncSessionLocal() as session:
-        yield session
+    async with new_session() as session:
+        try:
+            yield session
+        finally:
+            if session.in_transaction():
+                await session.rollback()
 
 
 async def get_current_user(
@@ -29,14 +33,24 @@ async def get_current_user(
 
     payload = decode_token(credentials.credentials, expected_type="access")
     if payload is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired access token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired access token"
+        )
 
     try:
         user_id = UUID(payload["sub"])
     except (ValueError, TypeError):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token") from None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token"
+        ) from None
     user = await UserRepository.get_by_id(user_id, db)
     if user is None or user.deleted_at is not None or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account unavailable")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User account unavailable"
+        )
 
     return user
+
+
+DbSession = Annotated[AsyncSession, Depends(get_db)]
+CurrentUser = Annotated[User, Depends(get_current_user)]

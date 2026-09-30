@@ -126,7 +126,11 @@ class EventFilters(BaseModel):
 
     @model_validator(mode="after")
     def check_date_range(self) -> "EventFilters":
-        if self.date_from is not None and self.date_to is not None and self.date_from > self.date_to:
+        if (
+            self.date_from is not None
+            and self.date_to is not None
+            and self.date_from > self.date_to
+        ):
             raise ValueError("date_from must be before or equal to date_to")
         return self
 
@@ -145,6 +149,7 @@ class AdminEventFilters(BaseModel):
         return _strip_text(value)
 
     model_config = ConfigDict(extra="forbid")
+
 
 class EventAvailabilityResponse(BaseModel):
     event_id: UUID

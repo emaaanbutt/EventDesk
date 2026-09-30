@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import BackgroundTasks
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ConflictError, NotFoundError, PermissionDeniedError
 from app.core.role_policy import Action
 from app.models.enums import NotificationCategory
 from app.models.users import User
@@ -20,7 +21,7 @@ from app.services.authorization_service import authorize_db
 
 def _require_available(actor: User) -> None:
     if not actor.is_active or actor.deleted_at is not None:
-        raise HTTPException(status_code=403, detail="User account is unavailable")
+        raise PermissionDeniedError(detail="User account is unavailable")
 
 
 async def reply_to_review(
@@ -33,22 +34,24 @@ async def reply_to_review(
     _require_available(actor)
     review = await ReviewRepository.get_by_id(review_id, db)
     if review is None:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise NotFoundError(detail="Review not found")
     event = await EventRepository.get_by_id(review.event_id, db)
     if event is None:
-        raise HTTPException(status_code=404, detail="Event not found")
+        raise NotFoundError(detail="Event not found")
     await authorize_db(actor, Action.reviews_reply, db, owner_id=event.organizer_id)
 
     if await ReviewReplyRepository.get_by_author(review.id, actor.id, db) is not None:
-        raise HTTPException(status_code=409, detail="You have already replied to this review")
+        raise ConflictError(detail="You have already replied to this review")
 
     try:
         reply = await ReviewReplyRepository.create(review.id, actor.id, payload.comment, db)
-        response = ReviewReplyResponse.model_validate(reply).model_copy(update={"author_name": actor.name})
+        response = ReviewReplyResponse.model_validate(reply).model_copy(
+            update={"author_name": actor.name}
+        )
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="Reply could not be created") from None
+        raise ConflictError(detail="Reply could not be created") from None
 
     background_tasks.add_task(publish_review_reply, event.id, review.id)
     if review.author_id != actor.id:
@@ -68,9 +71,11 @@ async def reply_to_review(
 async def list_review_replies(review_id: UUID, db: AsyncSession) -> list[ReviewReplyResponse]:
     review = await ReviewRepository.get_by_id(review_id, db)
     if review is None:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise NotFoundError(detail="Review not found")
     replies = await ReviewReplyRepository.list_for_review(review_id, db)
     return [
-        ReviewReplyResponse.model_validate(reply).model_copy(update={"author_name": reply.author.name})
+        ReviewReplyResponse.model_validate(reply).model_copy(
+            update={"author_name": reply.author.name}
+        )
         for reply in replies
     ]
