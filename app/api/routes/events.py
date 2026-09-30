@@ -4,21 +4,27 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_user, get_db
-from app.models.users import User
-from app.schemas.events import AdminEventFilters, EventCreate, EventFilters, EventListResponse, EventResponse, EventUpdate, EventAvailabilityResponse
+from app.core.dependencies import CurrentUser, DbSession, get_db
+from app.schemas.events import (
+    AdminEventFilters,
+    EventCreate,
+    EventFilters,
+    EventListResponse,
+    EventResponse,
+    EventUpdate,
+    EventAvailabilityResponse,
+)
 from app.services import event_service
 
-router = APIRouter(prefix="/events", tags=["events"])
+router = APIRouter(prefix="/events", tags=["events"], dependencies=[Depends(get_db)])
 
 
 @router.post("/", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
 async def create_event(
     payload: EventCreate,
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> EventResponse:
     return await event_service.create_event(actor, payload, db)
 
@@ -26,15 +32,15 @@ async def create_event(
 @router.get("/", response_model=EventListResponse)
 async def list_published_events(
     filters: Annotated[EventFilters, Query()],
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
 ) -> EventListResponse:
     return await event_service.list_published_events(filters, db)
 
 
 @router.get("/mine", response_model=list[EventResponse])
 async def get_my_events(
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> list[EventResponse]:
     return await event_service.get_my_events(actor, db)
 
@@ -42,8 +48,8 @@ async def get_my_events(
 @router.get("/admin", response_model=EventListResponse)
 async def list_all_events(
     filters: Annotated[AdminEventFilters, Query()],
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> EventListResponse:
     return await event_service.list_all_events(actor, filters, db)
 
@@ -51,7 +57,7 @@ async def list_all_events(
 @router.get("/{event_id}", response_model=EventResponse)
 async def get_public_event(
     event_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
 ) -> EventResponse:
     return await event_service.get_public_event(event_id, db)
 
@@ -59,8 +65,8 @@ async def get_public_event(
 @router.get("/{event_id}/manage", response_model=EventResponse)
 async def get_managed_event(
     event_id: UUID,
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> EventResponse:
     return await event_service.get_managed_event(actor, event_id, db)
 
@@ -68,8 +74,8 @@ async def get_managed_event(
 @router.get("/{event_id}/attended", response_model=EventResponse)
 async def get_attended_event(
     event_id: UUID,
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> EventResponse:
     return await event_service.get_attended_event(actor, event_id, db)
 
@@ -77,7 +83,7 @@ async def get_attended_event(
 @router.get("/{event_id}/availability", response_model=EventAvailabilityResponse)
 async def get_event_availability(
     event_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
 ) -> EventAvailabilityResponse:
     return await event_service.get_event_availability(event_id, db)
 
@@ -87,8 +93,8 @@ async def update_event(
     event_id: UUID,
     payload: EventUpdate,
     background_tasks: BackgroundTasks,
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> EventResponse:
     return await event_service.update_event(actor, event_id, payload, db, background_tasks)
 
@@ -96,8 +102,8 @@ async def update_event(
 @router.post("/{event_id}/publish", response_model=EventResponse)
 async def publish_event(
     event_id: UUID,
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> EventResponse:
     return await event_service.publish_event(actor, event_id, db)
 
@@ -105,8 +111,8 @@ async def publish_event(
 @router.post("/{event_id}/complete", response_model=EventResponse)
 async def complete_event(
     event_id: UUID,
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> EventResponse:
     return await event_service.complete_event(actor, event_id, db)
 
@@ -115,8 +121,8 @@ async def complete_event(
 async def cancel_event(
     event_id: UUID,
     background_tasks: BackgroundTasks,
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> EventResponse:
     return await event_service.cancel_event(actor, event_id, db, background_tasks)
 
@@ -125,7 +131,7 @@ async def cancel_event(
 async def delete_event(
     event_id: UUID,
     background_tasks: BackgroundTasks,
-    actor: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    actor: CurrentUser,
+    db: DbSession,
 ) -> None:
     await event_service.delete_event(actor, event_id, db, background_tasks)

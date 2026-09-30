@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
+from app.core.config import get_settings
 from app.core.security import hash_token
 from app.models.refresh_tokens import RefreshToken
 
@@ -15,7 +15,9 @@ class RefreshTokenRepository:
     @staticmethod
     async def create(user_id: uuid.UUID | str, raw_token: str, db: AsyncSession) -> RefreshToken:
         token_hash = hash_token(raw_token)
-        expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS
+        )
 
         refresh_token = RefreshToken(
             token_hash=token_hash,

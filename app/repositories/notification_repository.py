@@ -41,7 +41,7 @@ class NotificationRepository:
         message: str,
         event_id: UUID | None,
         booking_id: UUID | None,
-        review_id: UUID| None,
+        review_id: UUID | None,
         db: AsyncSession,
     ) -> list[Notification]:
         notifications = [

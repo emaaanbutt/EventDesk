@@ -14,7 +14,6 @@ from app.models.events import Event
 from app.models.tags import Tag
 from app.schemas.events import AdminEventFilters, EventFilters
 
-
 EVENT_FIELDS = {
     "title",
     "description",
@@ -119,7 +118,11 @@ class EventRepository:
         if filters.search is not None:
             pattern = f"%{filters.search}%"
             conditions.append(
-                or_(Event.title.ilike(pattern), Event.description.ilike(pattern), Event.venue.ilike(pattern))
+                or_(
+                    Event.title.ilike(pattern),
+                    Event.description.ilike(pattern),
+                    Event.venue.ilike(pattern),
+                )
             )
         if filters.category_id is not None:
             conditions.append(Event.category_id == filters.category_id)
@@ -180,9 +183,7 @@ class EventRepository:
     async def get_tags_by_ids(tag_ids: list[UUID], db: AsyncSession) -> list[Tag]:
         if not tag_ids:
             return []
-        result = await db.execute(
-            select(Tag).where(Tag.id.in_(tag_ids), Tag.deleted_at.is_(None))
-        )
+        result = await db.execute(select(Tag).where(Tag.id.in_(tag_ids), Tag.deleted_at.is_(None)))
         return list(result.scalars().all())
 
     @staticmethod

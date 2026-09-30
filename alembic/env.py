@@ -4,8 +4,8 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 from sqlalchemy.engine import make_url
 
-import app.models  # Register ORM tables with Base.metadata.
-from app.core.config import settings
+import app.models  # noqa: F401 - Register ORM tables with Base.metadata.
+from app.core.config import get_settings
 from app.db.base import Base
 
 config = context.config
@@ -13,7 +13,7 @@ if config.config_file_name:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
-sync_url = make_url(settings.DATABASE_URL).set(drivername="postgresql+psycopg")
+sync_url = make_url(get_settings().DATABASE_URL).set(drivername="postgresql+psycopg")
 
 
 def run_migrations_offline() -> None:

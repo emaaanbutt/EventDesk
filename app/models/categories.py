@@ -21,4 +21,3 @@ class Category(Base, TimeStamp):
     events: Mapped[list[Event]] = relationship(
         back_populates="category",
     )
-   

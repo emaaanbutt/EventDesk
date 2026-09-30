@@ -30,10 +30,10 @@ class RolePermission(Base):
         ),
         nullable=False,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
-
-    __table_args__ = (
-        UniqueConstraint("role", "permission_id", name="uq_role_permission"),
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+    __table_args__ = (UniqueConstraint("role", "permission_id", name="uq_role_permission"),)
 
     permission: Mapped[Permission] = relationship(back_populates="role_permissions")

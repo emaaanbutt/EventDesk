@@ -45,7 +45,7 @@ You need Python 3.12, `uv`, Node.js 20+, `pnpm`, and PostgreSQL. Run backend com
    cd ..
    ```
 
-2. Keep your existing `.env`. For a new setup, copy `.env.example` to `.env` and fill in the PostgreSQL password, a random secret key of at least 32 characters, and the Brevo settings. Never commit `.env`.
+2. Keep your existing `.env`. For a new setup, copy `.env.example` to `.env` and fill in the PostgreSQL password and a random secret key of at least 32 characters. Set `EMAIL_BACKEND=brevo` and supply a Brevo key and verified sender for email reminders, or explicitly set `EMAIL_BACKEND=disabled` for local development without email. The app validates required settings when it starts. Never commit `.env`.
 
 3. Start PostgreSQL and apply migrations:
 
@@ -81,7 +81,7 @@ Open `http://127.0.0.1:5173`. Vite forwards `/api` and `/ws` to FastAPI on port 
 
 ## Scheduled reminders
 
-The systemd timer runs event completion and reminder emails every five minutes while this computer's user services are active. It does not require the browser or API server to stay open, but PostgreSQL, internet access, and this computer must be available. Brevo needs an API key and verified sender in `.env`.
+The systemd timer runs event completion and, when `EMAIL_BACKEND=brevo`, reminder emails every five minutes while this computer's user services are active. It does not require the browser or API server to stay open, but PostgreSQL, internet access, and this computer must be available for email. Brevo needs an API key and verified sender in `.env`. With `EMAIL_BACKEND=disabled`, reminder bookings stay unsent and can be processed after email is enabled.
 
 ```bash
 systemctl --user enable --now eventdesk-jobs.timer
@@ -96,6 +96,8 @@ The provided `.service` files contain absolute paths for this machine. Update th
 ```bash
 .venv/bin/python -m compileall -q app alembic
 .venv/bin/alembic check
+.venv/bin/ruff check app
+.venv/bin/black --check app
 cd frontend && pnpm build
 ```
 

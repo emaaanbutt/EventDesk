@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import PermissionDeniedError
 from app.core.role_policy import Action
 from app.models.enums import PermissionScope
 from app.models.users import User
@@ -20,7 +20,7 @@ def _require_scope(actor: User, scope: PermissionScope | None, owner_id: UUID | 
         and actor.id == owner_id
     ):
         return
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Action not permitted")
+    raise PermissionDeniedError(detail="Action not permitted")
 
 
 async def authorize_db(
@@ -29,7 +29,7 @@ async def authorize_db(
     try:
         selected_action = Action(action)
     except (ValueError, TypeError):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Action not permitted") from None
+        raise PermissionDeniedError(detail="Action not permitted") from None
 
     scope = await PermissionRepository.get_scope(actor.role, selected_action.value, db)
     _require_scope(actor, scope, owner_id)

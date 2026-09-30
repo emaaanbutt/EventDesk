@@ -4,10 +4,16 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import BackgroundTasks
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import (
+    ConflictError,
+    InvalidInputError,
+    NotFoundError,
+    PermissionDeniedError,
+)
 from app.core.role_policy import Action
 from app.models.enums import BookingStatus, EventStatus, NotificationCategory
 from app.models.users import User
@@ -22,7 +28,7 @@ from app.services.authorization_service import authorize_db
 
 def _require_available(actor: User) -> None:
     if not actor.is_active or actor.deleted_at is not None:
-        raise HTTPException(status_code=403, detail="User account is unavailable")
+        raise PermissionDeniedError(detail="User account is unavailable")
 
 
 async def create_booking(
@@ -34,38 +40,39 @@ async def create_booking(
     try:
         event = await EventRepository.get_by_id_for_update(payload.event_id, db)
         if event is None:
-            raise HTTPException(status_code=404, detail="Event not found")
+            raise NotFoundError(detail="Event not found")
         if event.organizer_id == actor.id:
-            raise HTTPException(status_code=403, detail="You cannot book your own event")
+            raise PermissionDeniedError(detail="You cannot book your own event")
         if event.status != EventStatus.published:
-            raise HTTPException(status_code=409, detail="Only published events can be booked")
+            raise ConflictError(detail="Only published events can be booked")
         if event.starts_at <= datetime.now(timezone.utc):
-            raise HTTPException(status_code=409, detail="Booking is closed for this event")
+            raise ConflictError(detail="Booking is closed for this event")
 
         booked_tickets = await BookingRepository.get_confirmed_ticket_count(event.id, db)
         available_tickets = event.total_tickets - booked_tickets
         if payload.quantity > available_tickets:
-            raise HTTPException(status_code=409, detail="Not enough tickets available")
+            raise ConflictError(detail="Not enough tickets available")
 
         total_amount = event.ticket_price * payload.quantity
         if total_amount > Decimal("99999999.99"):
-            raise HTTPException(status_code=422, detail="Booking total exceeds the supported amount")
+            raise InvalidInputError(detail="Booking total exceeds the supported amount")
 
         booking = await BookingRepository.create_booking(
             event.id, actor.id, payload.quantity, total_amount, db
         )
         response = BookingResponse.model_validate(booking)
         await record_audit_log(
-            actor.id, Action.bookings_create, "booking", booking.id,
-            {"event_id": str(event.id), "quantity": booking.quantity}, db,
+            actor.id,
+            Action.bookings_create,
+            "booking",
+            booking.id,
+            {"event_id": str(event.id), "quantity": booking.quantity},
+            db,
         )
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="Booking could not be completed") from None
-    except Exception:
-        await db.rollback()
-        raise
+        raise ConflictError(detail="Booking could not be completed") from None
     background_tasks.add_task(publish_event_availability, event.id)
     background_tasks.add_task(
         notification_service.save_notifications_in_background,
@@ -75,7 +82,7 @@ async def create_booking(
         message=f"Your booking for {event.title} is confirmed.",
         event_id=event.id,
         booking_id=booking.id,
-        review_id=None
+        review_id=None,
     )
     return response
 
@@ -88,31 +95,32 @@ async def cancel_booking(
     try:
         event_id = await BookingRepository.get_event_id(booking_id, db)
         if event_id is None:
-            raise HTTPException(status_code=404, detail="Booking not found")
+            raise NotFoundError(detail="Booking not found")
 
         event = await EventRepository.get_by_id_for_update(event_id, db)
         if event is None:
-            raise HTTPException(status_code=404, detail="Event not found")
+            raise NotFoundError(detail="Event not found")
         booking = await BookingRepository.get_by_id_for_update(booking_id, db)
         if booking is None or booking.event_id != event.id:
-            raise HTTPException(status_code=404, detail="Booking not found")
+            raise NotFoundError(detail="Booking not found")
         await authorize_db(actor, Action.bookings_cancel, db, owner_id=booking.attendee_id)
         if booking.status == BookingStatus.cancelled:
-            raise HTTPException(status_code=409, detail="Booking is already cancelled")
+            raise ConflictError(detail="Booking is already cancelled")
 
         booking = await BookingRepository.cancel_booking(booking, db)
         response = BookingResponse.model_validate(booking)
         await record_audit_log(
-            actor.id, Action.bookings_cancel, "booking", booking.id,
-            {"event_id": str(event.id), "quantity": booking.quantity}, db,
+            actor.id,
+            Action.bookings_cancel,
+            "booking",
+            booking.id,
+            {"event_id": str(event.id), "quantity": booking.quantity},
+            db,
         )
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="Booking could not be cancelled") from None
-    except Exception:
-        await db.rollback()
-        raise
+        raise ConflictError(detail="Booking could not be cancelled") from None
     background_tasks.add_task(publish_event_availability, event.id)
     background_tasks.add_task(
         notification_service.save_notifications_in_background,
@@ -122,7 +130,7 @@ async def cancel_booking(
         message=f"Your booking for {event.title} has been cancelled.",
         event_id=event.id,
         booking_id=booking.id,
-        review_id=None
+        review_id=None,
     )
     return response
 
@@ -134,29 +142,30 @@ async def delete_booking(
     try:
         event_id = await BookingRepository.get_event_id(booking_id, db)
         if event_id is None:
-            raise HTTPException(status_code=404, detail="Booking not found")
+            raise NotFoundError(detail="Booking not found")
         event = await EventRepository.get_by_id_for_update(event_id, db, include_deleted=True)
         if event is None:
-            raise HTTPException(status_code=404, detail="Event not found")
+            raise NotFoundError(detail="Event not found")
         booking = await BookingRepository.get_by_id_for_update(booking_id, db)
         if booking is None or booking.event_id != event.id:
-            raise HTTPException(status_code=404, detail="Booking not found")
+            raise NotFoundError(detail="Booking not found")
         await authorize_db(actor, Action.bookings_delete, db, owner_id=booking.attendee_id)
         was_confirmed = booking.status == BookingStatus.confirmed
         if was_confirmed:
             await BookingRepository.cancel_booking(booking, db)
         await BookingRepository.soft_delete(booking, db)
         await record_audit_log(
-            actor.id, Action.bookings_delete, "booking", booking.id,
-            {"event_id": str(event.id), "quantity": booking.quantity}, db,
+            actor.id,
+            Action.bookings_delete,
+            "booking",
+            booking.id,
+            {"event_id": str(event.id), "quantity": booking.quantity},
+            db,
         )
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="Booking could not be deleted") from None
-    except Exception:
-        await db.rollback()
-        raise
+        raise ConflictError(detail="Booking could not be deleted") from None
     if was_confirmed:
         background_tasks.add_task(publish_event_availability, event.id)
         background_tasks.add_task(
@@ -201,9 +210,7 @@ async def get_all_bookings(
 ) -> BookingListResponse:
     _require_available(actor)
     await authorize_db(actor, Action.bookings_view, db)
-    bookings, total = await BookingRepository.list_all_bookings(
-        filters.page, filters.page_size, db
-    )
+    bookings, total = await BookingRepository.list_all_bookings(filters.page, filters.page_size, db)
     return BookingListResponse(
         items=[
             BookingResponse.model_validate(booking).model_copy(

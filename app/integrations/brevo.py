@@ -1,6 +1,6 @@
 import httpx
 
-from app.core.config import settings
+from app.core.config import get_settings
 
 
 async def send_email(
@@ -9,6 +9,9 @@ async def send_email(
     subject: str,
     html_content: str,
 ) -> str:
+    settings = get_settings()
+    if settings.EMAIL_BACKEND != "brevo":
+        raise RuntimeError("Brevo email is disabled")
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.post(
             "https://api.brevo.com/v3/smtp/email",

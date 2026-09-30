@@ -1,35 +1,45 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
-from app.api.routes.audit_logs import router as audit_logs_router
-from app.api.routes.auth import router as auth_router
-from app.api.routes.bookings import router as bookings_router
-from app.api.routes.categories import router as categories_router
-from app.api.routes.events import router as events_router
-from app.api.routes.health import router as health_router
-from app.api.routes.notifications import router as notifications_router
+from app.api.router import api_router
 from app.api.routes.realtime import router as realtime_router
-from app.api.routes.review_replies import router as review_replies_router
-from app.api.routes.reviews import router as reviews_router
-from app.api.routes.tags import router as tags_router
-from app.api.routes.users import router as users_router
-
-app = FastAPI(title="EventDesk", version="1.0.0")
-app.include_router(audit_logs_router, prefix="/api")
-app.include_router(auth_router, prefix="/api")
-app.include_router(bookings_router, prefix="/api")
-app.include_router(categories_router, prefix="/api")
-app.include_router(events_router, prefix="/api")
-app.include_router(health_router, prefix="/api")
-app.include_router(notifications_router, prefix="/api")
-app.include_router(realtime_router)
-app.include_router(review_replies_router, prefix="/api")
-app.include_router(reviews_router, prefix="/api")
-app.include_router(tags_router, prefix="/api")
-app.include_router(users_router, prefix="/api")
+from app.core.config import get_settings
+from app.core.exceptions import DomainError
+from app.core.logging import configure_logging
+from app.db.session import get_engine
 
 frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
-app.frontend("/", directory=frontend_dist, fallback="index.html")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    configure_logging()
+    get_settings()
+    if not (frontend_dist / "index.html").is_file():
+        raise RuntimeError("Frontend build missing. Run `pnpm build` in frontend/ first.")
+    engine = get_engine()
+    try:
+        yield
+    finally:
+        await engine.dispose()
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="EventDesk", version="1.0.0", lifespan=lifespan)
+
+    @app.exception_handler(DomainError)
+    async def handle_domain_error(_request: Request, exc: DomainError) -> JSONResponse:
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    app.include_router(api_router, prefix="/api")
+    app.include_router(realtime_router)
+    app.frontend("/", directory=frontend_dist, fallback="index.html", check_dir=False)
+    return app
+
+
+app = create_app()

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
-from sqlalchemy import text
 
-from app.core.dependencies import get_db
 from app.db.session import ping_database
 
 router = APIRouter(tags=["health"])

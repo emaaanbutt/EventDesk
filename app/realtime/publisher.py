@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.session import AsyncSessionLocal
+from app.core.exceptions import NotFoundError
+from app.db.session import new_session
 from app.schemas.notifications import NotificationResponse
 from app.realtime.manager import manager
 
@@ -22,14 +23,12 @@ async def publish_event_availability(event_id: UUID) -> None:
         try:
             from app.services.event_service import get_event_availability
 
-            async with AsyncSessionLocal() as db:
+            async with new_session() as db:
                 availability = await get_event_availability(event_id, db)
-        except HTTPException:
-            await room.broadcast(
-                {"type": "event.unavailable", "data": {"event_id": str(event_id)}}
-            )
+        except NotFoundError:
+            await room.broadcast({"type": "event.unavailable", "data": {"event_id": str(event_id)}})
             return
-        except Exception:
+        except (SQLAlchemyError, OSError):
             logger.exception("Could not load availability for event %s", event_id)
             return
         await room.broadcast(

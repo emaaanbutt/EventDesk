@@ -2,12 +2,13 @@ import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
+from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ConflictError, NotFoundError, PermissionDeniedError
 from app.core.role_policy import Action
-from app.db.session import AsyncSessionLocal
+from app.db.session import new_session
 from app.models.enums import NotificationCategory
 from app.models.users import User
 from app.realtime.publisher import publish_notification
@@ -20,13 +21,12 @@ from app.schemas.notifications import (
 )
 from app.services.authorization_service import authorize_db
 
-
 logger = logging.getLogger(__name__)
 
 
 def _require_available(actor: User) -> None:
     if not actor.is_active or actor.deleted_at is not None:
-        raise HTTPException(status_code=403, detail="User account is unavailable")
+        raise PermissionDeniedError(detail="User account is unavailable")
 
 
 async def save_notifications_in_background(
@@ -36,15 +36,15 @@ async def save_notifications_in_background(
     message: str,
     event_id: UUID | None,
     booking_id: UUID | None,
-    review_id: UUID | None
+    review_id: UUID | None,
 ) -> None:
     try:
-        async with AsyncSessionLocal() as db:
+        async with new_session() as db:
             notifications = await NotificationRepository.create_for_users(
                 user_ids, category, title, message, event_id, booking_id, review_id, db
             )
             await db.commit()
-    except Exception:
+    except (SQLAlchemyError, ValidationError):
         logger.exception("Failed to save background notifications")
         return
 
@@ -53,7 +53,7 @@ async def save_notifications_in_background(
             await publish_notification(
                 NotificationResponse.model_validate(notification), notification.user_id
             )
-        except Exception:
+        except (ValidationError, RuntimeError, OSError):
             logger.exception("Failed to publish notification %s", notification.id)
 
 
@@ -79,7 +79,7 @@ async def set_notification_read_state(
         notification_id, actor.id, db
     )
     if notification is None:
-        raise HTTPException(status_code=404, detail="Notification not found")
+        raise NotFoundError(detail="Notification not found")
     await authorize_db(actor, Action.notifications_update, db, owner_id=notification.user_id)
 
     if notification.is_read == payload.is_read:
@@ -96,4 +96,4 @@ async def set_notification_read_state(
         return response
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="Notification could not be updated") from None
+        raise ConflictError(detail="Notification could not be updated") from None

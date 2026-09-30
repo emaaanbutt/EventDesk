@@ -9,7 +9,7 @@ from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 from app.core.security import decode_token
-from app.db.session import AsyncSessionLocal
+from app.db.session import new_session
 from app.repositories.user_repository import UserRepository
 
 
@@ -44,7 +44,7 @@ async def authenticate_notification_socket(socket: WebSocket) -> tuple[UUID, int
         await socket.close(code=1008)
         return None
 
-    async with AsyncSessionLocal() as db:
+    async with new_session() as db:
         user = await UserRepository.get_by_id(user_id, db)
     if user is None or user.deleted_at is not None or not user.is_active:
         await socket.close(code=1008)

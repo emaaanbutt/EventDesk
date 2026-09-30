@@ -9,7 +9,10 @@ import bcrypt
 import jwt
 from jwt import InvalidTokenError
 
-from app.core.config import settings
+from app.core.config import get_settings
+
+JWT_ALGORITHM = "HS256"
+
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("ascii")
@@ -35,20 +38,24 @@ def create_token(subject: str, token_type: str, expires_delta: timedelta) -> str
         "iat": datetime.now(timezone.utc),
         "jti": secrets.token_hex(16),
     }
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return jwt.encode(payload, get_settings().SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
 def create_access_token(subject: str) -> str:
-    return create_token(subject, "access", timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    return create_token(
+        subject, "access", timedelta(minutes=get_settings().ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
 
 
 def create_refresh_token(subject: str) -> str:
-    return create_token(subject, "refresh", timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS))
+    return create_token(
+        subject, "refresh", timedelta(days=get_settings().REFRESH_TOKEN_EXPIRE_DAYS)
+    )
 
 
 def decode_token(token: str, expected_type: str) -> dict[str, Any] | None:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(token, get_settings().SECRET_KEY, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != expected_type or not payload.get("sub") or not payload.get("jti"):
             return None
         return payload

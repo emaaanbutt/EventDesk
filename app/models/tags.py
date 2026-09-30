@@ -29,4 +29,3 @@ class Tag(Base, TimeStamp):
         back_populates="tags",
         overlaps="event_tags,event,tag",
     )
-   

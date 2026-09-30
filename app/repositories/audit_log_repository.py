@@ -32,9 +32,7 @@ class AuditLogRepository:
         return names
 
     @staticmethod
-    async def list_logs(
-        page: int, page_size: int, db: AsyncSession
-    ) -> tuple[list[AuditLog], int]:
+    async def list_logs(page: int, page_size: int, db: AsyncSession) -> tuple[list[AuditLog], int]:
         total = await db.scalar(select(func.count(AuditLog.id)))
         result = await db.execute(
             select(AuditLog)
