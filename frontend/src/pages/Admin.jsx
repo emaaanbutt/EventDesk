@@ -93,7 +93,7 @@ function EventsAdmin() {
         </select>
       </div>
       <Alert message={error} />
-      {!result && !error ? <Busy /> : result?.items.length ? (
+      {!result && !error ? <Busy /> : !result ? null : result.items.length ? (
         <>
           <div className="card table-wrap">
             <table>
@@ -155,7 +155,7 @@ function UsersAdmin() {
       <Alert message={notice} kind="success" />
       {!users && !error ? (
         <Busy />
-      ) : users?.length ? (
+      ) : !users ? null : users.length ? (
         <div className="card table-wrap">
           <table>
             <thead>
@@ -377,7 +377,7 @@ function AuditAdmin() {
       <Alert message={error} />
       {!result && !error ? (
         <Busy />
-      ) : result?.items.length ? (
+      ) : !result ? null : result.items.length ? (
         <>
           <div className="card table-wrap">
             <table>

@@ -2,9 +2,10 @@ const TOKEN_KEY = "eventdesk.tokens";
 let refreshPromise = null;
 
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, fieldErrors = {}) {
     super(message);
     this.status = status;
+    this.fieldErrors = fieldErrors;
   }
 }
 
@@ -46,6 +47,23 @@ function fieldLabel(name) {
 
 function friendlyText(message) {
   const clean = message.replace(/^Value error,\s*/i, "").replace(/\s*\[type=.*$/i, "");
+  const messages = {
+    "Event start time must be in the future": "Choose a start date and time in the future.",
+    "Event end time must be after start time": "End date and time must be later than the start.",
+    "Total tickets cannot be less than tickets already booked": "Total tickets cannot be lower than the number already booked.",
+    "Not enough tickets available": "There aren't enough tickets left. Choose a smaller quantity.",
+    "Booking could not be completed": "We couldn't complete your booking. Please try again.",
+    "Action not permitted": "You don't have permission to do that.",
+    "Unknown category": "That category is no longer available. Choose another.",
+    "Unknown tag": "A selected tag is no longer available. Choose another.",
+    "Email already exists": "That email address is already in use. Sign in or use another.",
+    "Event not found": "This event is no longer available.",
+    "Invalid email or password": "Email or password is incorrect. Please try again.",
+    "Invalid or expired refresh token": "Your session has expired. Please sign in again.",
+    "Invalid refresh token": "Your session has expired. Please sign in again.",
+    "Refresh token is invalid or revoked": "Your session has expired. Please sign in again.",
+  };
+  if (messages[clean]) return messages[clean];
   if (/date_from must be before or equal to date_to/i.test(clean))
     return "From date must be on or before To date.";
   if (/Only published events can be booked/i.test(clean))
@@ -81,16 +99,24 @@ function validationMessage(item) {
 
 export function errorMessage(detail) {
   if (typeof detail === "string") return friendlyText(detail);
-  if (Array.isArray(detail))
-    return detail.map(validationMessage).join(" · ");
+  if (Array.isArray(detail) && detail.length)
+    return detail.map(validationMessage).join("\n");
   return "Something went wrong. Please try again.";
 }
 
 async function parseResponse(response) {
   if (response.status === 204) return null;
   const data = await response.json().catch(() => null);
-  if (!response.ok)
-    throw new ApiError(errorMessage(data?.detail), response.status);
+  if (!response.ok) {
+    const detail = data?.detail;
+    const fieldErrors = Array.isArray(detail)
+      ? Object.fromEntries(detail.flatMap((item) => {
+          const name = [...(item.loc || [])].reverse().find((part) => typeof part === "string" && !["body", "query", "path"].includes(part));
+          return name ? [[name, validationMessage(item)]] : [];
+        }))
+      : {};
+    throw new ApiError(errorMessage(detail), response.status, fieldErrors);
+  }
   return data;
 }
 
